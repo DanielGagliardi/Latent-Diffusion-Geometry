@@ -1,0 +1,10 @@
+{
+  "N_IMG": 128,
+  "N_DATA": 2000,
+  "SIGMA": 0.5,
+  "LAMBDA": 0,
+  "LR": 0.001,
+  "BATCH": 128,
+  "EPOCHS": 200,
+  "device": "mps"
+}
