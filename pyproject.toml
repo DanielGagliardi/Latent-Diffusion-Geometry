@@ -13,6 +13,14 @@ dependencies = [
     "scikit-learn>=1.8.0",
     "scipy>=1.17.1",
     "torch>=2.11.0",
+    "plotly>=6.7.0",
+    "nbformat>=4.2.0",
+    "ipympl>=0.10.0",
+    "jupyterlab>=4.5.7",
+    "jupyter-collaboration>=4.4.0",
+    "pandas>=3.0.3",
+    "tqdm>=4.67.3",
+    "pyarrow>=24.0.0",
 ]
 
 [dependency-groups]
