@@ -34,3 +34,13 @@ wheels/
 # --- OS specific ---
 .DS_Store
 Thumbs.db
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+.jupyter/
+.jupyter_ystore.db
+*.ystore.db
+
+# --- Data / large outputs ---
+experiments/data/
