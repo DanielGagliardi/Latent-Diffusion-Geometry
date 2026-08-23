@@ -48,6 +48,15 @@ experiments/checkpoints/
 **/checkpoints/
 *.pt
 
+# --- LaTeX build artifacts ---
+*.aux
+*.log
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.out
+*.toc
+
 # --- Datasets / downloaded data caches ---
 **/data/
 **/datasets/
