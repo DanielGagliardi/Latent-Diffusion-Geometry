@@ -47,3 +47,13 @@ experiments/data/
 experiments/checkpoints/
 **/checkpoints/
 *.pt
+
+# --- Datasets / downloaded data caches ---
+**/data/
+**/datasets/
+**/mnist_cache/
+**/scikit_learn_data/
+*.idx1-ubyte
+*.idx3-ubyte
+*.npz
+*.npy

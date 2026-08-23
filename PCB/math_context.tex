@@ -1,0 +1,1096 @@
+\documentclass{article}
+\usepackage[margin=1.5cm]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+
+\begin{document}
+
+The two sections are built around one central fact:
+\[
+A_t(y) = Dm_t(y) = \frac1t\operatorname{Cov}(X\mid Y_t=y)
+\]
+turns the posterior covariance into a local linear response operator. Once this identity is available, both the diffusion dynamics and the complexity measures become different ways of reading the same matrix $A_t$.
+
+The uploaded note states these identities and quantities, but does not derive all of the intermediate steps. The derivations below therefore expand the note using the Gaussian-channel identities underlying it.
+
+\section*{1. Setup: the Gaussian scale $t$}
+Start with
+\[
+Y_t = X + \sqrt{t}\,Z,
+\qquad
+Z\sim\mathcal N(0,I_d),
+\qquad Z\perp X.
+\]
+Here $t$ is the noise variance, not the noise standard deviation.
+Thus
+\[
+\operatorname{Cov}(\sqrt t Z) = tI_d.
+\]
+Let $p_t$ be the density of $Y_t$. Since $Y_t$ is obtained by Gaussian smoothing,
+\[
+p_t = p_0 * \mathcal N(0,tI_d),
+\]
+and therefore $p_t$ satisfies the heat equation
+\[
+\boxed{
+\partial_t p_t(y) = \frac12\Delta p_t(y).
+}
+\]
+This observation is what connects the posterior construction to diffusion models.
+Define
+\[
+m_t(y) = \mathbb E[X\mid Y_t=y],
+\]
+and
+\[
+A_t(y) = \frac1t\operatorname{Cov}(X\mid Y_t=y).
+\]
+The Gaussian posterior identities give
+\[
+m_t(y) = y + t\nabla\log p_t(y),
+\]
+or equivalently
+\[
+\boxed{
+s_t(y) := \nabla\log p_t(y) = \frac{m_t(y)-y}{t}.
+}
+\]
+Differentiating with respect to $y$,
+\[
+Dm_t(y) = I + tDs_t(y).
+\]
+But
+\[
+Dm_t(y) = A_t(y),
+\]
+so
+\[
+\boxed{
+Ds_t(y) = \frac{A_t(y)-I}{t}.
+}
+\]
+This last equation is the key to everything that follows.
+
+\section*{2. From the heat equation to the probability-flow ODE}
+The phrase "probability-flow ODE" can look mysterious because the underlying diffusion is stochastic whereas the ODE is deterministic.
+The forward process indexed by $t$ has density evolution
+\[
+\partial_t p_t = \frac12\Delta p_t.
+\]
+We want a deterministic velocity field $v_t(y)$ such that particles moving according to
+\[
+\frac{dy_t}{dt} = v_t(y_t)
+\]
+have exactly the same marginal density $p_t$.
+A deterministic flow satisfies the continuity equation
+\[
+\partial_t p_t + \nabla\cdot(p_t v_t) = 0.
+\]
+We therefore need
+\[
+-\nabla\cdot(p_t v_t) = \frac12\Delta p_t.
+\]
+Using
+\[
+\Delta p_t = \nabla\cdot(\nabla p_t) = \nabla\cdot(p_t\nabla\log p_t),
+\]
+we can choose
+\[
+v_t(y) = -\frac12\nabla\log p_t(y).
+\]
+Hence the forward probability-flow ODE is
+\[
+\boxed{
+\frac{dy_t}{dt} = -\frac12s_t(y_t).
+}
+\]
+Substitute the Tweedie identity
+\[
+s_t(y) = \frac{m_t(y)-y}{t},
+\]
+giving
+\[
+\boxed{
+\frac{dy_t}{dt} = -\frac{m_t(y_t)-y_t}{2t}.
+}
+\]
+This is the deterministic ODE whose marginal law at time $t$ is $p_t$.
+
+\section*{3. Why the reverse ODE points toward $m_t(y)$}
+The forward process moves from low noise to high noise:
+\[
+t:0\longrightarrow T.
+\]
+A diffusion model normally runs in the opposite direction:
+\[
+t:T\longrightarrow0.
+\]
+Suppose we introduce a new reverse-time variable $\tau$, with
+\[
+t = t_\tau,
+\qquad
+\frac{dt_\tau}{d\tau} < 0.
+\]
+By the chain rule,
+\[
+\frac{dy_\tau}{d\tau} = \frac{dt_\tau}{d\tau} \frac{dy_t}{dt}.
+\]
+Using
+\[
+\frac{dy_t}{dt} = -\frac12s_t(y_t),
+\]
+we obtain
+\[
+\frac{dy_\tau}{d\tau} = -\frac12\frac{dt_\tau}{d\tau} s_{t_\tau}(y_\tau).
+\]
+Since $dt_\tau/d\tau < 0$, define
+\[
+\boxed{
+\beta_\tau := -\frac{1}{2t_\tau}\frac{dt_\tau}{d\tau} > 0.
+}
+\]
+Then
+\[
+-\frac12\frac{dt_\tau}{d\tau} = \beta_\tau t_\tau,
+\]
+and hence
+\[
+\frac{dy_\tau}{d\tau} = \beta_\tau t_\tau s_{t_\tau}(y_\tau).
+\]
+Using
+\[
+t s_t(y) = m_t(y)-y,
+\]
+we obtain
+\[
+\boxed{
+\dot y_\tau = \beta_\tau \left( m_{t_\tau}(y_\tau)-y_\tau \right).
+}
+\]
+This is the equation written in the note.
+So $\beta_\tau$ is not a mysterious new probabilistic object. It is essentially a reparameterization factor determined by how rapidly the noise variance $t_\tau$ is being decreased.
+For example, if one chooses
+\[
+t_\tau = T e^{-2\tau},
+\]
+then
+\[
+\frac{dt_\tau}{d\tau} = -2t_\tau,
+\]
+so
+\[
+\beta_\tau = 1.
+\]
+In that parameterization,
+\[
+\boxed{
+\dot y_\tau = m_t(y_\tau)-y_\tau.
+}
+\]
+Thus the reverse flow simply moves the current point toward its posterior barycentre.
+
+\section*{4. Why call this a relaxation?}
+Write
+\[
+m_t(y)-y = t s_t(y).
+\]
+Therefore
+\[
+\dot y_\tau = \beta_\tau t_\tau s_{t_\tau}(y_\tau).
+\]
+The score points toward regions where the density increases. But the posterior interpretation is more informative:
+\[
+m_t(y)-y = \mathbb E[X-Y_t\mid Y_t=y].
+\]
+Therefore
+\[
+\boxed{
+\dot y_\tau = \beta_\tau \mathbb E[X-Y_t\mid Y_t=y_\tau].
+}
+\]
+The velocity is the posterior expected displacement from the noisy observation toward the latent clean variable.
+So this is a mean relaxation dynamics:
+\[
+y \quad\longrightarrow\quad m_t(y).
+\]
+Importantly, $m_t(y)$ is generally not a point on a hard manifold. It is the barycentre of the posterior distribution.
+That is the reason the note calls this a replacement for "projection onto a manifold."
+
+\section*{5. What exactly is $D\dot y_\tau$?}
+This is an important notational distinction.
+The ODE is
+\[
+\dot y_\tau = v_\tau(y_\tau),
+\]
+where
+\[
+v_\tau(y) = \beta_\tau(m_{t_\tau}(y)-y).
+\]
+There are two different derivatives one might take.
+
+\paragraph{Derivative along the trajectory}
+This is
+\[
+\frac{d}{d\tau}y_\tau.
+\]
+It tells us where the particle moves.
+
+\paragraph{Jacobian with respect to the current spatial position}
+This is
+\[
+D_y v_\tau(y).
+\]
+It tells us how nearby particles move relative to one another.
+The note's expression
+\[
+D\dot y_\tau = -\beta_\tau(I-A_t)
+\]
+is the second object.
+Since
+\[
+v_\tau(y) = \beta_\tau(m_t(y)-y),
+\]
+and $\beta_\tau$ depends only on $\tau$, not on $y$,
+\[
+D_y v_\tau(y) = \beta_\tau(Dm_t(y)-I).
+\]
+But
+\[
+Dm_t(y) = A_t(y),
+\]
+so
+\[
+\boxed{
+D_y v_\tau(y) = \beta_\tau(A_t(y)-I) = -\beta_\tau(I-A_t(y)).
+}
+\]
+This is the precise meaning of the second equation.
+
+\section*{6. Why the Jacobian matters geometrically}
+Suppose two nearby trajectories differ by a small vector $\delta y_\tau$.
+Linearizing the ODE gives
+\[
+\frac{d}{d\tau}\delta y_\tau = D_y v_\tau(y_\tau)\delta y_\tau.
+\]
+Therefore
+\[
+\boxed{
+\frac{d}{d\tau}\delta y_\tau = -\beta_\tau(I-A_t(y_\tau))\delta y_\tau.
+}
+\]
+Now diagonalize $A_t$:
+\[
+A_t v_i = a_i v_i.
+\]
+In the corresponding eigen-direction $v_i$,
+\[
+\frac{d}{d\tau}\delta y_i = -\beta_\tau(1-a_i)\delta y_i.
+\]
+Thus
+\[
+\boxed{
+\delta y_i(\tau) \sim \exp\left(-\int \beta_\tau(1-a_i)\,d\tau\right).
+}
+\]
+This gives the interpretation in the note.
+
+If $a_i < 1$ \\
+Then
+\[
+-\beta_\tau(1-a_i) < 0.
+\]
+Nearby trajectories contract.
+
+If $a_i = 1$ \\
+Then
+\[
+-\beta_\tau(1-a_i) = 0.
+\]
+The direction is locally neutral.
+
+If $a_i > 1$ \\
+Then
+\[
+-\beta_\tau(1-a_i) > 0.
+\]
+Nearby trajectories expand.
+So $A_t$ is directly controlling the local stability of the reverse diffusion.
+
+\section*{7. Connection to tangent and normal directions}
+In the ideal small-noise manifold picture,
+\[
+A_t \approx P_{T_xM}.
+\]
+Hence
+\[
+a_i \approx
+\begin{cases}
+1,& v_i\in T_xM,\\[1ex]
+0,& v_i\in N_xM.
+\end{cases}
+\]
+Consequently,
+
+Tangent direction \\
+$a_i \approx 1$ \\
+gives
+\[
+-\beta(1-a_i) \approx 0.
+\]
+There is little transverse contraction of nearby trajectories along the tangent space.
+
+Normal direction \\
+$a_i \approx 0$ \\
+gives
+\[
+-\beta(1-a_i) \approx -\beta.
+\]
+There is strong contraction toward the manifold.
+Thus
+\[
+\boxed{
+A_t \text{ determines both posterior uncertainty and dynamical stability.}
+}
+\]
+This is one of the strongest conceptual points in the whole construction.
+
+\section*{8. What does "stiffness" mean here?}
+Suppose $a_i \approx 0$. Then the local contraction rate is approximately
+\[
+\beta_\tau.
+\]
+Suppose another direction has $a_j \approx 1$. Its rate is approximately zero.
+Therefore the system can simultaneously contain
+\[
+\text{fast normal dynamics}
+\]
+and
+\[
+\text{slow tangent dynamics}.
+\]
+This separation of time scales is precisely what numerical analysts call stiffness.
+For example,
+\[
+a_1 = 0.01, \qquad a_2 = 0.99
+\]
+gives rates approximately
+\[
+-\beta(0.99), \qquad -\beta(0.01).
+\]
+One direction contracts roughly $100$ times faster than the other.
+So the spectrum of $A_t$ is not merely describing geometry. It describes the conditioning of the reverse ODE.
+
+\section*{9. First complexity measure: effective dimension}
+The proposed quantity is
+\[
+\boxed{
+d_{\mathrm{eff}}(t) = \mathbb E[\operatorname{tr}A_t].
+}
+\]
+Since
+\[
+A_t = \frac1t\operatorname{Cov}(X\mid Y_t),
+\]
+we have
+\[
+\operatorname{tr}A_t = \frac1t \operatorname{tr}\operatorname{Cov}(X\mid Y_t).
+\]
+For any random vector $X$,
+\[
+\operatorname{tr}\operatorname{Cov}(X\mid Y_t) = \mathbb E[\,|X-m_t(Y_t)|^2 \mid Y_t\,].
+\]
+Taking expectations,
+\[
+\mathbb E[\operatorname{tr} \operatorname{Cov}(X\mid Y_t)] = \mathbb E[\,|X-m_t(Y_t)|^2\,].
+\]
+The right-hand side is precisely the MMSE:
+\[
+\operatorname{mmse}(X\mid Y_t) := \mathbb E[\,|X-\mathbb E[X\mid Y_t]|^2\,].
+\]
+Therefore
+\[
+\boxed{
+d_{\mathrm{eff}}(t) = \frac{\operatorname{mmse}(X\mid Y_t)}{t}.
+}
+\]
+This identity is exact, not heuristic.
+
+\section*{10. Why does this deserve the name "effective dimension"?}
+Let the eigenvalues of $A_t$ be
+\[
+a_1,\ldots,a_d.
+\]
+Then
+\[
+\operatorname{tr}A_t = \sum_i a_i.
+\]
+In the ideal manifold case,
+\[
+A_t \approx P_{T_xM}.
+\]
+A $k$-dimensional orthogonal projector has eigenvalues
+\[
+\underbrace{1,\ldots,1}_{k}, \qquad \underbrace{0,\ldots,0}_{d-k},
+\]
+so
+\[
+\operatorname{tr}P_{T_xM} = k.
+\]
+Therefore
+\[
+\boxed{
+\operatorname{tr}A_t \approx \dim(T_xM).
+}
+\]
+This motivates the terminology.
+It is useful to think of each eigenvalue as contributing a fractional dimension:
+\[
+a_i = 0 \quad\Rightarrow\quad 0\text{ dimensions},
+\]
+\[
+a_i = 1 \quad\Rightarrow\quad 1\text{ dimension},
+\]
+\[
+a_i = 0.4 \quad\Rightarrow\quad 0.4\text{ effective dimensions}.
+\]
+Thus
+\[
+d_{\mathrm{eff}}(t) = \mathbb E\sum_i a_i
+\]
+is the average number of noise-scaled posterior directions.
+There is an important caveat: this interpretation is strongest when $A_t$ is approximately projector-like. If $a_i > 1$, then the "dimension contribution" exceeds one. That is exactly why the second and third complexity measures are useful: $d_{\mathrm{eff}}$ alone cannot distinguish ordinary tangent dimension from posterior ambiguity.
+
+\section*{11. A useful interpretation through MMSE}
+The identity
+\[
+d_{\mathrm{eff}}(t) = \frac{\operatorname{mmse}(X\mid Y_t)}{t}
+\]
+has a simple meaning.
+The numerator measures how much uncertainty remains about $X$ after seeing $Y_t$:
+\[
+\operatorname{mmse} = \mathbb E|X-m_t(Y_t)|^2.
+\]
+The denominator $t$ is the variance of the Gaussian noise.
+Hence
+\[
+\boxed{
+d_{\mathrm{eff}} = \frac{\text{remaining posterior uncertainty}}{\text{noise variance}}.
+}
+\]
+This is why the quantity is dimensionless.
+For a locally $k$-dimensional manifold, posterior uncertainty is approximately
+\[
+k\,t,
+\]
+because the posterior has $O(t)$ uncertainty in $k$ tangent directions and much less uncertainty in normal directions. Therefore
+\[
+\operatorname{mmse} \approx kt,
+\]
+and consequently
+\[
+d_{\mathrm{eff}} \approx k.
+\]
+That is the cleanest justification for the term "effective dimension."
+
+\section*{12. Second complexity measure: deviation from a projector}
+The proposed quantity is
+\[
+\boxed{
+\Delta_{\mathrm{proj}}(t) = \mathbb E \sum_i \min\{a_i^2,(a_i-1)^2\}.
+}
+\]
+The logic here is very precise.
+A hard manifold tangent structure is represented by a projector $P$, whose eigenvalues are only
+\[
+0 \quad\text{or}\quad 1.
+\]
+Suppose $A_t$ has eigenvalue $a_i$.
+If we want $a_i$ to resemble a projector eigenvalue, we have two choices:
+\[
+0 \qquad\text{or}\qquad 1.
+\]
+The squared distance to $0$ is
+\[
+(a_i-0)^2 = a_i^2.
+\]
+The squared distance to $1$ is
+\[
+(a_i-1)^2.
+\]
+The closest projector eigenvalue therefore gives
+\[
+\boxed{
+\min\{a_i^2,(a_i-1)^2\}.
+}
+\]
+Summing over eigenvalues gives the total spectral distance from projector structure.
+
+\section*{13. Why the formula changes at $a_i=1/2$}
+Compare
+\[
+a_i^2
+\]
+and
+\[
+(a_i-1)^2.
+\]
+They are equal when
+\[
+a_i^2 = (a_i-1)^2.
+\]
+Expanding,
+\[
+a_i^2 = a_i^2 - 2a_i + 1,
+\]
+so
+\[
+a_i = \frac12.
+\]
+Therefore
+\[
+\min\{a_i^2,(a_i-1)^2\} =
+\begin{cases}
+a_i^2,& a_i\le1/2,\\[1ex]
+(a_i-1)^2,& a_i\ge1/2.
+\end{cases}
+\]
+This says:
+
+if $a_i$ is closer to $0$, interpret it as a normal-like direction; \\
+if $a_i$ is closer to $1$, interpret it as a tangent-like direction. \\
+The penalty is zero exactly when
+\[
+a_i \in \{0,1\}.
+\]
+Therefore
+\[
+\boxed{
+\Delta_{\mathrm{proj}}(t) = 0
+}
+\]
+precisely when $A_t$ is projector-like everywhere almost surely.
+
+\section*{14. Why this is actually a distance to the nearest projector}
+There is an even cleaner matrix interpretation.
+Let $A$ be symmetric positive semidefinite with eigendecomposition
+\[
+A = U\operatorname{diag}(a_1,\ldots,a_d)U^\top.
+\]
+Consider the set of orthogonal projectors
+\[
+\mathcal P = \{P : P=P^\top=P^2\}.
+\]
+The squared Frobenius distance from $A$ to a projector $P$ is
+\[
+|A-P|_F^2.
+\]
+The closest projector is obtained by keeping the eigenvectors of $A$ and replacing each eigenvalue $a_i$ by whichever of $0$ or $1$ is closer.
+Thus
+\[
+\boxed{
+\min_{P\in\mathcal P}|A-P|_F^2 = \sum_i \min\{a_i^2,(a_i-1)^2\}.
+}
+\]
+So
+\[
+\boxed{
+\Delta_{\mathrm{proj}}(t) = \mathbb E\left[ \operatorname{dist}_F^2(A_t,\mathcal P) \right].
+}
+\]
+This is a much stronger interpretation than simply saying it is an ad hoc statistic.
+It asks:
+
+How far, on average, is the soft posterior geometry from being a genuine tangent-space projector?
+
+\section*{15. Why $d_{\mathrm{eff}}$ and $\Delta_{\mathrm{proj}}$ complement one another}
+Consider two matrices.
+
+Case A: genuine 3-dimensional tangent space
+\[
+A = \operatorname{diag}(1,1,1,0,0).
+\]
+Then
+\[
+\operatorname{tr}A = 3
+\]
+and
+\[
+\Delta_{\mathrm{proj}} = 0.
+\]
+This is clean manifold geometry.
+
+Case B: diffuse uncertainty
+\[
+A = \operatorname{diag}(0.5,0.5,0.5,0.5,0.5,0.5).
+\]
+Then
+\[
+\operatorname{tr}A = 3
+\]
+as well.
+So $d_{\mathrm{eff}}$ also says "3."
+But
+\[
+\Delta_{\mathrm{proj}} = 6\cdot\min\{0.25,0.25\} = 1.5.
+\]
+Thus the two quantities distinguish
+\[
+\text{three clean tangent directions}
+\]
+from
+\[
+\text{six partially uncertain directions}.
+\]
+This is exactly why the second statistic is necessary.
+
+\section*{16. Third complexity measure: expansive/ambiguous directions}
+Now consider
+\[
+\boxed{
+\mathcal A(t) = \mathbb E \sum_i(a_i-1)_+^2,
+}
+\]
+where
+\[
+(x)_+ := \max\{x,0\}.
+\]
+At first glance this may look less natural than the first two. Its motivation comes directly from the dynamics.
+Recall
+\[
+Ds_t = \frac{A_t-I}{t}.
+\]
+If
+\[
+A_t v_i = a_i v_i,
+\]
+then
+\[
+Ds_t v_i = \frac{a_i-1}{t}v_i.
+\]
+Therefore:
+\[
+a_i < 1 \quad\Rightarrow\quad \text{negative score curvature},
+\]
+\[
+a_i = 1 \quad\Rightarrow\quad \text{neutral score curvature},
+\]
+\[
+a_i > 1 \quad\Rightarrow\quad \text{positive score curvature}.
+\]
+But the reverse probability-flow Jacobian is
+\[
+D_y v_\tau = -\beta_\tau(I-A_t).
+\]
+Hence
+\[
+D_y v_\tau v_i = \beta_\tau(a_i-1)v_i.
+\]
+Therefore
+\[
+\boxed{
+a_i > 1 \iff \text{the reverse flow is locally expansive in direction }v_i.
+}
+\]
+That is the fundamental reason for $\mathcal A(t)$.
+
+\section*{17. Why threshold at 1?}
+The threshold $1$ is not arbitrary.
+Recall
+\[
+A_t = \frac{\operatorname{Cov}(X\mid Y_t)}{t}.
+\]
+Thus
+\[
+a_i = \frac{\text{posterior variance in direction }v_i}{\text{noise variance }t}.
+\]
+Therefore: \\
+$a_i < 1$ means posterior uncertainty is smaller than the injected noise scale; \\
+$a_i = 1$ means posterior uncertainty is exactly at the noise scale; \\
+$a_i > 1$ means posterior uncertainty exceeds the noise scale. \\
+So $a_i = 1$ is the natural boundary between
+\[
+\text{posterior denoising/contraction}
+\]
+and
+\[
+\text{posterior amplification/expansion}.
+\]
+The positive-part operator isolates exactly the second regime:
+\[
+(a_i-1)_+ =
+\begin{cases}
+0,& a_i\le1,\\[1ex]
+a_i-1,& a_i>1.
+\end{cases}
+\]
+Squaring then makes large expansive eigenvalues disproportionately costly.
+
+\section*{18. Why call $a_i>1$ "ambiguity"?}
+Suppose the posterior $X\mid Y_t=y$ is concentrated around one clean configuration. Then conditioning on $Y_t=y$ has substantially reduced uncertainty.
+One expects
+\[
+\operatorname{Cov}(X\mid Y_t=y) \lesssim tI
+\]
+in the relevant directions, giving
+\[
+a_i \lesssim 1.
+\]
+Now suppose the observation $y$ is compatible with several substantially different latent configurations.
+For example, imagine $X$ is distributed around two separated branches. A noisy observation in the region where those branches overlap can leave a posterior approximately like
+\[
+\frac12\mathcal N(\mu_1,\Sigma) + \frac12\mathcal N(\mu_2,\Sigma).
+\]
+The posterior covariance contains not only the within-branch covariance $\Sigma$, but also the between-branch term
+\[
+\frac14(\mu_1-\mu_2)(\mu_1-\mu_2)^\top.
+\]
+That second term can be large.
+Consequently,
+\[
+\operatorname{Cov}(X\mid Y_t=y)
+\]
+can exceed the ambient noise covariance $tI$ in the direction connecting the competing branches.
+Then
+\[
+a_i > 1.
+\]
+So $a_i > 1$ is a useful signature of posterior ambiguity: the noisy observation does not identify a single locally stable latent configuration, and the posterior spreads across multiple possibilities.
+Strictly speaking, $a_i > 1$ is a diagnostic of posterior variance exceeding the noise scale; "ambiguity" is the geometric interpretation of that phenomenon, not a theorem that every $a_i>1$ must arise from multimodality.
+
+\section*{19. Why square $(a_i-1)_+$?}
+There are three choices encoded in
+\[
+(a_i-1)_+^2.
+\]
+First: threshold at $1$ \\
+We only care about expansion:
+\[
+a_i > 1.
+\]
+Second: measure excess, not absolute magnitude \\
+We care about
+\[
+a_i-1,
+\]
+because $1$ is the neutral boundary.
+For example,
+\[
+a_i = 1.1
+\]
+has a small excess
+\[
+0.1,
+\]
+whereas
+\[
+a_i = 3
+\]
+has a large excess
+\[
+2.
+\]
+Third: square it \\
+The square makes the quantity analogous to a squared Frobenius norm and strongly penalizes large expansion:
+\[
+(a_i-1)_+^2.
+\]
+Therefore $\mathcal A(t)$ is measuring the mean squared amount by which posterior geometry exceeds the neutral/noise threshold in expansive directions.
+
+\section*{20. $\mathcal A(t)$ is specifically dynamical, unlike $\Delta_{\mathrm{proj}}$}
+This distinction is important.
+\[
+\Delta_{\mathrm{proj}}
+\]
+asks:
+
+How close is $A_t$ to a hard tangent projector?
+
+Whereas
+\[
+\mathcal A
+\]
+asks:
+
+How much of $A_t$'s spectrum lies beyond the dynamical stability threshold $1$, and how strongly?
+These are different questions.
+For example,
+\[
+A = \operatorname{diag}(1.2,1.2,0,0).
+\]
+Then
+\[
+\Delta_{\mathrm{proj}} = 2(0.2)^2 = 0.08,
+\]
+while
+\[
+\mathcal A = 2(0.2)^2 = 0.08.
+\]
+Here both detect the same departure.
+But consider
+\[
+A = \operatorname{diag}(0.4,0.4,0.4,0.4).
+\]
+Then
+\[
+\mathcal A = 0,
+\]
+because there is no expansion.
+Yet
+\[
+\Delta_{\mathrm{proj}} = 4(0.4)^2 = 0.64.
+\]
+So this geometry is decidedly non-projector-like, but it is not dynamically expansive.
+That is exactly the distinction the two statistics are designed to make.
+
+\section*{21. The three quantities together}
+The cleanest way to understand the proposal is:
+\[
+\boxed{
+d_{\mathrm{eff}} \quad+\quad \Delta_{\mathrm{proj}} \quad+\quad \mathcal A
+}
+\]
+measure three different properties.
+
+1. $d_{\mathrm{eff}}$: "How many dimensions?"
+\[
+d_{\mathrm{eff}} = \mathbb E\sum_i a_i.
+\]
+It measures total normalized posterior variance.
+For a clean $k$-dimensional manifold,
+\[
+d_{\mathrm{eff}}\approx k.
+\]
+2. $\Delta_{\mathrm{proj}}$: "How manifold-like?"
+\[
+\Delta_{\mathrm{proj}} = \mathbb E\sum_i \min\{a_i^2,(a_i-1)^2\}.
+\]
+It measures how far the spectrum is from the binary projector spectrum
+\[
+\{0,1\}.
+\]
+3. $\mathcal A$: "How dynamically ambiguous/expansive?"
+\[
+\mathcal A = \mathbb E\sum_i(a_i-1)_+^2.
+\]
+It ignores all $a_i\le1$ and isolates the directions where the reverse flow becomes locally expansive.
+This gives the conceptual decomposition
+\[
+\boxed{
+\text{dimension} \quad\neq\quad \text{manifold-likeness} \quad\neq\quad \text{ambiguity}.
+}
+\]
+
+\section*{22. The evolution of $S(t)$}
+The note defines
+\[
+S(t) = \operatorname{tr} \operatorname{Cov}(m_t(Y_t)).
+\]
+Because $m_t(Y_t)=\mathbb E[X\mid Y_t]$, this measures the spatial variance of the posterior barycentres.
+It is useful to distinguish this from the posterior uncertainty:
+\[
+\operatorname{Cov}(X\mid Y_t).
+\]
+The former measures where the posterior means are distributed across space. The latter measures how uncertain each individual posterior is.
+The law of total covariance says
+\[
+\operatorname{Cov}(X) = \operatorname{Cov}(\mathbb E[X\mid Y_t]) + \mathbb E[ \operatorname{Cov}(X\mid Y_t) ].
+\]
+Therefore
+\[
+\operatorname{Cov}(X) = \operatorname{Cov}(m_t(Y_t)) + \mathbb E[ \operatorname{Cov}(X\mid Y_t) ].
+\]
+Taking traces,
+\[
+\operatorname{tr}\operatorname{Cov}(X) = S(t) + \operatorname{mmse}(X\mid Y_t).
+\]
+Thus
+\[
+\boxed{
+S(t) = \operatorname{tr}\operatorname{Cov}(X) - \operatorname{mmse}(X\mid Y_t).
+}
+\]
+As noise decreases, the posterior becomes more informative, MMSE decreases, and the barycentric representation recovers more of the original spatial variance.
+
+\section*{23. Deriving the first evolution law}
+The Gaussian-channel MMSE identity gives
+\[
+\frac{d}{dt}\operatorname{mmse}(X\mid Y_t) = -\mathbb E\operatorname{tr}(A_t^2).
+\]
+Since $A_t$ is symmetric,
+\[
+\operatorname{tr}(A_t^2) = |A_t|_F^2.
+\]
+Therefore
+\[
+\frac{d}{dt}\operatorname{mmse}(X\mid Y_t) = -\mathbb E|A_t|_F^2.
+\]
+From
+\[
+S(t) = \operatorname{tr}\operatorname{Cov}(X) - \operatorname{mmse}(X\mid Y_t),
+\]
+we get
+\[
+S'(t) = -\frac{d}{dt}\operatorname{mmse}(X\mid Y_t),
+\]
+hence
+\[
+\boxed{
+S'(t) = \mathbb E|A_t|_F^2.
+}
+\]
+There is an important sign issue here relative to the uploaded note.
+The note states
+\[
+S'(t) = -\mathbb E|A_t|_F^2. \tag{note}
+\]
+But with the stated convention
+\[
+Y_t = X + \sqrt{t}\,Z
+\]
+and
+\[
+S(t) = \operatorname{tr}\operatorname{Cov}(m_t(Y_t)),
+\]
+the standard Gaussian-channel calculation gives
+\[
+\boxed{
+S'(t) = +\mathbb E|A_t|_F^2.
+}
+\]
+This also follows from the simple limiting picture: as $t\to0$,
+\[
+m_t(Y_t)\to X,
+\]
+so
+\[
+S(t)\to\operatorname{tr}\operatorname{Cov}(X),
+\]
+whereas at larger $t$, the posterior barycentres become more concentrated and their variance decreases. Thus $S(t)$ should increase as $t$ decreases, equivalently $S'(t)>0$ when differentiating with respect to increasing $t$.
+So the phrase in the note
+
+"the barycentric skeleton loses spatial complexity monotonically"
+
+is correct when moving along the reverse/decreasing-$t$ direction, but the displayed derivative sign appears inconsistent with the definition of $t$ and $S$.
+This distinction matters.
+
+\section*{24. Deriving the effective-dimension evolution law}
+We have
+\[
+d_{\mathrm{eff}}(t) = \frac{\operatorname{mmse}(X\mid Y_t)}{t}.
+\]
+Write
+\[
+M(t) = \operatorname{mmse}(X\mid Y_t).
+\]
+Then
+\[
+d_{\mathrm{eff}}(t) = \frac{M(t)}{t}.
+\]
+Differentiate:
+\[
+d_{\mathrm{eff}}'(t) = \frac{tM'(t)-M(t)}{t^2}.
+\]
+Multiply by $t$:
+\[
+t d_{\mathrm{eff}}'(t) = M'(t)-\frac{M(t)}{t}.
+\]
+But
+\[
+M'(t) = -\mathbb E\operatorname{tr}(A_t^2)
+\]
+and
+\[
+\frac{M(t)}{t} = d_{\mathrm{eff}}(t) = \mathbb E\operatorname{tr}A_t.
+\]
+Hence
+\[
+t d_{\mathrm{eff}}'(t) = -\mathbb E\operatorname{tr}(A_t^2) - \mathbb E\operatorname{tr}A_t.
+\]
+This does not match the sign/formula in the uploaded note.
+The standard Gaussian-channel scaling instead gives the MMSE derivative in terms of the normalized covariance with the sign convention carefully handled through the parameterization. To avoid conflating conventions, the safest invariant derivation is to start from the exact relation used in the note and verify its parameter convention.
+Under the stated definition
+\[
+A_t = \frac1t\operatorname{Cov}(X\mid Y_t)
+\]
+and $Y_t = X + \sqrt{t}\,Z$, the identity
+\[
+t d_{\mathrm{eff}}'(t) = \mathbb E\operatorname{tr}(A_t^2-A_t)
+\]
+would imply
+\[
+\operatorname{mmse}'(t) = \mathbb E\operatorname{tr}(A_t^2) - 2\mathbb E\operatorname{tr}(A_t),
+\]
+which is not the standard heat-time MMSE identity.
+So there is a parameter/sign inconsistency in the final evolution-law paragraph of the supplied note. The note's earlier definitions are consistent, but the two displayed evolution laws should not be accepted simultaneously without specifying a different time/noise convention.
+This is worth correcting before building further theory on those formulas.
+
+\section*{25. What survives independently of that convention issue}
+The most important structural conclusions do not depend on the disputed signs.
+The eigenvalues $a_i$ simultaneously control:
+\[
+\boxed{
+\begin{aligned}
+a_i &= \frac{\text{posterior variance}}{\text{noise variance}},\\[2mm]
+a_i &= \text{eigenvalue of }Dm_t,\\[2mm]
+\frac{a_i-1}{t} &= \text{eigenvalue of }Ds_t,\\[2mm]
+\beta_\tau(a_i-1) &= \text{eigenvalue of the reverse-flow Jacobian}.
+\end{aligned}
+}
+\]
+This makes $A_t$ the central object.
+Its trace measures total normalized uncertainty:
+\[
+\operatorname{tr}A_t \leadsto d_{\mathrm{eff}}.
+\]
+Its distance from $\{0,1\}$ measures departure from hard tangent geometry:
+\[
+\Delta_{\mathrm{proj}}.
+\]
+Its spectrum above $1$ measures dynamical expansion:
+\[
+\mathcal A.
+\]
+
+\section*{26. A compact mathematical interpretation}
+The entire construction can be summarized by taking an eigenvector $v_i$ of $A_t$:
+\[
+A_t v_i = a_i v_i.
+\]
+Then one scalar $a_i$ has four simultaneous meanings:
+\[
+\boxed{
+a_i = \frac{\operatorname{Var}(v_i^\top X\mid Y_t)}{t}.
+}
+\]
+So it measures normalized posterior uncertainty.
+At the same time,
+\[
+Dm_t v_i = a_i v_i,
+\]
+so it measures the sensitivity of the posterior barycentre.
+Also,
+\[
+Ds_t v_i = \frac{a_i-1}{t}v_i,
+\]
+so $a_i-1$ measures local score curvature.
+Finally,
+\[
+D_y v_\tau v_i = \beta_\tau(a_i-1)v_i,
+\]
+so $a_i-1$ determines local stability of the reverse diffusion.
+Therefore:
+\[
+\boxed{
+\begin{array}{c|c}
+a_i & \text{interpretation}\\
+\hline
+0 & \text{normal-like / strongly denoised / contracting}\\
+0<a_i<1 & \text{soft normal / contracting}\\
+a_i=1 & \text{tangent-like / neutral}\\
+a_i>1 & \text{posterior variance above noise scale / expansive}
+\end{array}
+}
+\]
+This is the conceptual reason the note puts so much weight on the spectrum of $A_t$: one matrix connects posterior uncertainty, geometry, score curvature, and diffusion dynamics.
+\end{document}
