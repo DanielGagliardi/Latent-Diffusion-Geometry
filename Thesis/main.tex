@@ -1,5 +1,30 @@
 \documentclass{article}
-\usepackage{graphicx} % Required for inserting images
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{hyperref}
+\usepackage[authoryear,round]{natbib}
+
+% Custom math operators for proper spacing
+\DeclareMathOperator{\Cov}{Cov}
+\DeclareMathOperator{\Law}{Law}
+\DeclareMathOperator{\E}{\mathbb{E}}
+
+% Style for main mathematical assertions (italicized body text)
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+
+% Style for definitions and structures (upright body text)
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}[definition]{Example}
+
+% Style for auxiliary notes (upright body text, less visual emphasis)
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}[section]
+\newtheorem*{remark*}{Remark}
 
 \title{M2-Thesis}
 \author{Daniel Gagliardi}
@@ -10,27 +35,69 @@
 \maketitle
 
 \newpage
-
 \tableofcontents
+\newpage
+
+% --- Preface Section ---
+\section*{Preface}
+\addcontentsline{toc}{section}{Preface}
+
+Throughout my undergraduate and graduate studies in mathematics I have been caught between two main interests: the applied world of machine learning, and the theoretical world of topology and geometry. 
+
+While this is often viewed as an unusual mix to choose, I have always found it greatly enjoyable.
+
+This culminated in me wanting to answer the question of what is happening to the ``shape'' of data throughout a machine learning process, and also what even is the ``shape'' of data.
+
+The value in understanding this is twofold: first, to be able to make better models by leveraging our understanding of how they work, and second, to be able to understand how to interpret what these models are doing. The dance between naturally arising data and the model trying to fit without knowing how the data is generated is truly fascinating. My main motivation was to try to understand this. 
+
+One big idea is the notion of data lying on some low-dimensional space, which makes both learning and sampling from distributions supported on this lower-dimensional space easier.
 
 \newpage
 
-\abstract{
-    This is the abstract of the thesis.
-}
+\begin{abstract}
+    This is the abstract of the thesis. 
+\end{abstract}
 
 \newpage
 
 \section{Introduction}
+\label{sec:intro}
+
+We started by looking at \citep{potaptchik2024linear}.
 
 \section{Background}
+\label{sec:background}
 
 \section{Anisotropic Stability Bound}
 
 \section{Ridges}
+\label{sec:ridges}
+
+\section{Level Sets}
+\label{sec:level_sets}
 
 \section{Posterior Covariance Field}
+\label{sec:pcf}
 
+Here we introduce the ultimate object we analyse: posterior covariance fields.
+
+\begin{definition}
+    Let $Y_t = X + \sqrt{t} Z$, $m_t(y) := \E\left[X \mid Y_t=y\right]$, and
+    \[
+    A_t(y) := \frac{1}{t} \Cov\left(X \mid Y_t=y\right).
+    \]
+    We call the weighted object $\mathfrak{F}_t := \Law\left(Y_t, m_t\left(Y_t\right), A_t\left(Y_t\right)\right)$ the \emph{posterior covariance field}. 
+\end{definition}
+
+Note: while we are also including the posterior mean $m_t(y)$ in our definition, we keep the name for simplicity. The posterior mean $m_t$ and by extension the score $s_t$ is the object whose regularity we want to understand, so its inclusion is natural.
+
+There are a few reasons why it makes sense to look at this object. First, it is not plagued by the issues we encountered in the analysis of ridges or level sets in \autoref{sec:ridges} and \autoref{sec:level_sets}. These objects suffered from being too geometric for our use case, where we care about noise scales much greater than 0. We need a more analytic quantity, and the posterior covariance field is defined for all noise scales $t>0$. Second, the posterior covariance captures the local geometry of the score. The posterior covariance corresponds to the Jacobian of the score. This link is given in \autoref{sec:background}. Here we normalise the posterior covariance by $t$ to account for the scale of noise added. Third, here we deal with expectations, rather than $L^\infty$-type quantities. If there exists a region of the density which is geometrically complex and as a consequence has poor regularity, but which carries almost no mass, we should not let it dramatically change our understanding of the behaviour of the score.
+
+\subsection{Experiments}
+
+\newpage
+
+\bibliographystyle{plainnat}
+\bibliography{references}
 
 \end{document}
-
