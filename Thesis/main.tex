@@ -42,15 +42,19 @@
 \section*{Preface}
 \addcontentsline{toc}{section}{Preface}
 
-Throughout my undergraduate and graduate studies in mathematics I have been caught between two main interests: the applied world of machine learning, and the theoretical world of topology and geometry. 
-
-While this is often viewed as an unusual mix to choose, I have always found it greatly enjoyable.
+Throughout my undergraduate and graduate studies in mathematics I have been caught between two main interests: the applied world of machine learning, and the theoretical world of topology and geometry. While this is often viewed as an unusual mix to choose, I have always found it greatly enjoyable.
 
 This culminated in me wanting to answer the question of what is happening to the ``shape'' of data throughout a machine learning process, and also what even is the ``shape'' of data.
 
-The value in understanding this is twofold: first, to be able to make better models by leveraging our understanding of how they work, and second, to be able to understand how to interpret what these models are doing. The dance between naturally arising data and the model trying to fit without knowing how the data is generated is truly fascinating. My main motivation was to try to understand this. 
+The value in understanding this is twofold: first, to be able to make better models by leveraging our understanding of how they work, and second, to be able to understand how to interpret what these models are doing. The dance between naturally arising data and the model trying to fit without knowing how the data is generated is a curious one. My main motivation was to try to understand this. 
 
-One big idea is the notion of data lying on some low-dimensional space, which makes both learning and sampling from distributions supported on this lower-dimensional space easier.
+One big idea is the notion of data lying on some low-dimensional space, which makes both learning and sampling from distributions supported on this lower-dimensional space easier. However this belief only truly simplifies the system in the small noise regime. All sorts of complex geometry can happen in the higher noise regimes. We do not, as we will see, have a nicely behaved interpolating family of manifolds.
+
+Before doing the IASD M2 program, I had written a master's dissertation on diffusion models under the manifold hypothesis, under the supervision of George Deligiannidis. During this I became deeply interested in dimension estimation of datasets. This at best vauge and at worse terribly ill-posed question seemed to me one where and answer would tell us a lot about the natural geometry of data, and how diffusion models are able to make use of this. Almost every paper I found on the interplay between manifolds and diffusion models cited work from Eddie Aamari.
+
+In November 2025 I reached out to Eddie Aamari to further discuss what the geometry of data could look like, and this led to this internship project. The initial goal was to understand the interplay between geometry affecting sampling error and how this could encourage simpler embeddings in a latent diffusion setting. However, given the complexity of work being done limited time was spent on investigating autoencoders so far.
+
+A key challenge of this project has been stirking the balance between geometry: where things are well defined, and diffusion of probability densities: where simply by adding noise we violently change the notions of geometry we would like to equip our density with. This tradeoff has led to looking at several objects, which while interesting in their own right have not been helpful in bounding sampling error. We do think the final part on posterior covariance fields \autoref{sec:pcf} does provide new insight on where true complexity lies in the diffusion process.
 
 \newpage
 
