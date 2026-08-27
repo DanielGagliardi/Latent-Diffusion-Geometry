@@ -1,29 +1,44 @@
 \documentclass{article}
 \usepackage{graphicx}
 \usepackage{amsmath,amssymb,amsthm}
-\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{microtype}
 \usepackage[authoryear,round]{natbib}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue]{hyperref}
 
-% Custom math operators for proper spacing
+% --- Custom Math Operators & Commands ---
 \DeclareMathOperator{\Cov}{Cov}
 \DeclareMathOperator{\Law}{Law}
-\DeclareMathOperator{\E}{\mathbb{E}}
+\DeclareMathOperator{\Var}{Var}
+\DeclareMathOperator{\tr}{tr}
+\DeclareMathOperator{\dist}{dist}
+\DeclareMathOperator{\mmse}{mmse}
+\DeclareMathOperator*{\argmin}{arg\,min}
 
-% Style for main mathematical assertions (italicized body text)
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathcal{N}}
+\newcommand{\M}{\mathcal{M}}
+\newcommand{\Pset}{\mathcal{P}}
+\newcommand{\deff}{d_{\mathrm{eff}}}
+\newcommand{\dproj}{\Delta_{\mathrm{proj}}}
+\newcommand{\amb}{\mathcal{A}}
+\newcommand{\II}{\mathrm{I\!I}}
+\newcommand{\Frob}[1]{\lVert #1 \rVert_F}
+
+% --- Theorem Environments (Unified Hierarchy) ---
 \theoremstyle{plain}
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{proposition}[theorem]{Proposition}
 \newtheorem{lemma}[theorem]{Lemma}
 \newtheorem{corollary}[theorem]{Corollary}
 
-% Style for definitions and structures (upright body text)
 \theoremstyle{definition}
-\newtheorem{definition}{Definition}[section]
-\newtheorem{example}[definition]{Example}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
 
-% Style for auxiliary notes (upright body text, less visual emphasis)
 \theoremstyle{remark}
-\newtheorem{remark}{Remark}[section]
+\newtheorem{remark}[theorem]{Remark}
 \newtheorem*{remark*}{Remark}
 
 \title{M2-Thesis}
@@ -69,16 +84,26 @@ A key challenge of this project has been stirking the balance between geometry: 
 
 We started by looking at \citep{potaptchik2024linear}.
 
+\newpage
+
 \section{Background}
 \label{sec:background}
 
+\newpage
+
 \section{Anisotropic Stability Bound}
+\label{sec:aniso_stab_bound}
+\newpage
 
 \section{Ridges}
 \label{sec:ridges}
 
+\newpage
+
 \section{Level Sets}
 \label{sec:level_sets}
+
+\newpage
 
 \section{Posterior Covariance Field}
 \label{sec:pcf}
@@ -95,7 +120,169 @@ Here we introduce the ultimate object we analyse: posterior covariance fields.
 
 Note: while we are also including the posterior mean $m_t(y)$ in our definition, we keep the name for simplicity. The posterior mean $m_t$ and by extension the score $s_t$ is the object whose regularity we want to understand, so its inclusion is natural.
 
-There are a few reasons why it makes sense to look at this object. First, it is not plagued by the issues we encountered in the analysis of ridges or level sets in \autoref{sec:ridges} and \autoref{sec:level_sets}. These objects suffered from being too geometric for our use case, where we care about noise scales much greater than 0. We need a more analytic quantity, and the posterior covariance field is defined for all noise scales $t>0$. Second, the posterior covariance captures the local geometry of the score. The posterior covariance corresponds to the Jacobian of the score. This link is given in \autoref{sec:background}. Here we normalise the posterior covariance by $t$ to account for the scale of noise added. Third, here we deal with expectations, rather than $L^\infty$-type quantities. If there exists a region of the density which is geometrically complex and as a consequence has poor regularity, but which carries almost no mass, we should not let it dramatically change our understanding of the behaviour of the score.
+There are a few reasons why it makes sense to look at this object. First, it is not plagued by the issues we encountered in the analysis of ridges or level sets in \autoref{sec:ridges} and \autoref{sec:level_sets}. These objects suffered from being too geometric for our use case, where we care about noise scales much greater than 0. We need a more analytic quantity, and the posterior covariance field is defined for all noise scales $t>0$. Second, the posterior covariance captures the local geometry of the score. The posterior covariance corresponds to the Jacobian of the score. This link is given in \autoref{sec:background}. Here we normalise the posterior covariance by $t$ to account for the scale of noise added. Third, here we deal with expectations, rather than $L^\infty$-type quantities like the reach $\tau_M$. If there exists a region of the density which is geometrically complex and as a consequence has poor regularity, but which carries almost no mass, we should not let it dramatically change our understanding of the behaviour of the score.
+
+\subsection{Three functionals of the spectrum}
+
+All three quantities below are moments of the same object: the spectral
+measure of $A_t$, averaged over $y \sim p_t$. Write $a_1(y),\dots,a_D(y)$
+for the eigenvalues of $A_t(y)$ and let
+$\mu_t := \mathrm{Law}\bigl(a_I(Y_t)\bigr)$ with $I$ uniform on
+$\{1,\dots,D\}$, so that $\E\sum_i f(a_i) = D\int f\,d\mu_t$ for any
+$f$.
+
+\subsubsection{Effective dimension}
+
+\begin{definition}
+\begin{equation}
+\deff(t) \;:=\; \E\bigl[\tr A_t(Y_t)\bigr] \;=\; \E\sum_{i} a_i .
+\label{eq:deff}
+\end{equation}
+\end{definition}
+
+\begin{proposition}[Exact MMSE identity]
+\label{prop:deff-mmse}
+Let $\mmse(t) := \E\bigl|X - m_t(Y_t)\bigr|^2$. Then
+\begin{equation}
+\deff(t) \;=\; \frac{\mmse(t)}{t}.
+\label{eq:deff-mmse}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+$\tr\Cov(X\mid Y_t) = \E\bigl[|X-m_t(Y_t)|^2 \mid Y_t\bigr]$; take
+expectations and divide by $t$.
+\end{proof}
+
+Identity \eqref{eq:deff-mmse} is exact, not asymptotic, and has two
+consequences of practical importance. First, $\deff$ is dimensionless: it
+is residual posterior uncertainty measured in units of injected noise
+variance. Second, $\mmse(t)$ is precisely the population value of the
+$\varepsilon$-prediction (or $x_0$-prediction) denoising loss at noise
+level $t$, so $\deff$ requires no computation beyond the training
+objective already being evaluated.
+
+\paragraph{Link to dimension.}
+An orthogonal projector of rank $k$ has spectrum
+$\{1^{(k)},0^{(D-k)}\}$ and trace $k$. In the ideal manifold limit
+$A_t\approx P_{T_x\M}$ and hence $\deff(t)\approx d$. Equivalently, via
+\eqref{eq:deff-mmse}: a $d$-dimensional manifold leaves $O(t)$ posterior
+uncertainty in each of $d$ tangent directions and $o(t)$ in the normal
+directions, so $\mmse \approx d\times t$. Each eigenvalue may be read as a
+fractional dimension: $a_i = 0.4$ contributes $0.4$ effective directions.
+
+\paragraph{Failure mode.}
+$\deff$ is a first moment and therefore cannot distinguish
+$\mathrm{diag}(1,1,1,0,0,0)$ from $\mathrm{diag}(\tfrac12,\tfrac12,\tfrac12,\tfrac12,\tfrac12,\tfrac12)$:
+both have trace $3$. It also over-counts when $a_i > 1$, in which case
+the ``fractional dimension'' reading breaks down entirely. The next two
+functionals repair exactly these two deficiencies.
+
+\subsubsection{Distance to projector structure}
+
+\begin{definition}
+\begin{equation}
+\dproj(t) \;:=\; \E\sum_i \min\bigl\{a_i^2,\;(a_i-1)^2\bigr\}.
+\label{eq:dproj}
+\end{equation}
+\end{definition}
+
+The summand is the squared distance from $a_i$ to the set $\{0,1\}$, and
+the two branches exchange at $a_i = \tfrac12$:
+\begin{equation}
+\min\{a^2,(a-1)^2\} =
+\begin{cases}
+a^2, & a \le \tfrac12 \quad\text{(read as normal-like)},\\
+(a-1)^2, & a \ge \tfrac12 \quad\text{(read as tangent-like)}.
+\end{cases}
+\end{equation}
+
+\begin{proposition}
+\label{prop:dproj-frob}
+Let $\Pset = \{P \in \R^{D\times D}: P = P^\top = P^2\}$ be the set of
+orthogonal projectors and let $A$ be symmetric with eigenvalues $a_i$.
+Then
+\begin{equation}
+\min_{P\in\Pset}\Frob{A-P}^2 \;=\; \sum_i \min\{a_i^2,(a_i-1)^2\},
+\qquad\text{hence}\qquad
+\dproj(t) = \E\bigl[\dist_F^2\bigl(A_t(Y_t),\Pset\bigr)\bigr].
+\label{eq:dproj-frob}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+$\Pset$ is invariant under conjugation by orthogonal matrices, and for
+symmetric $A$ the Frobenius distance to a conjugation-invariant set is
+minimized by a $P$ sharing the eigenvectors of $A$ (a consequence of the
+Hoffman--Wielandt inequality). It then remains to round each $a_i$ to the
+nearer of $0$ or $1$.
+\end{proof}
+
+Thus $\dproj$ answers: \emph{how far, on average, is the soft posterior
+geometry from being a genuine tangent-space projector?} It vanishes
+exactly when $A_t(Y_t)$ is a projector almost surely.
+
+\begin{remark}[Interpretation as a resolution probe]
+For data concentrated near a manifold but with normal thickness $\delta$,
+the normal eigenvalues behave as $a_n \approx \delta^2/(\delta^2+t)$,
+which passes through $\tfrac12$ at $t \approx \delta^2$ and contributes
+$\tfrac14$ to $\dproj$ there. Consequently $\dproj(t)$ peaks at the scale
+at which the manifold hypothesis stops being exactly true, and its peak
+location is a readout of that scale. $\dproj$ is best regarded as a
+scale-resolved test of manifold-likeness rather than a single verdict.
+\end{remark}
+
+\subsubsection{Ambiguity}
+
+\begin{definition}
+With $(x)_+ := \max\{x,0\}$,
+\begin{equation}
+\amb(t) \;:=\; \E\sum_i \bigl(a_i - 1\bigr)_+^2 .
+\label{eq:amb}
+\end{equation}
+\end{definition}
+
+The motivation is dynamical rather than geometric. $a_i > 1$ occurs if and only if the reverse probability-flow ODE is locally expansive along $v_i$. The threshold is the separatrix at which posterior variance exceeds the injected noise variance:
+\begin{equation}
+a_i = \frac{\text{posterior variance along } v_i}{\text{noise variance } t}
+\quad\begin{cases}
+<1: & \text{denoising, contraction},\\
+=1: & \text{neutral},\\
+>1: & \text{amplification, expansion}.
+\end{cases}
+\end{equation}
+The three design choices are then: threshold at $1$ (only expansion is
+penalized), measure the \emph{excess} $a_i-1$ (the neutral point is $1$,
+not $0$), and square it (making the functional comparable to a squared
+Frobenius norm and penalizing strong expansion superlinearly).
+
+\paragraph{Link to ambiguity.}
+Suppose the posterior at $y$ is approximately
+$\tfrac12\N(\mu_1,\Sigma) + \tfrac12\N(\mu_2,\Sigma)$, corresponding to
+two competing clean configurations. Then
+\begin{equation}
+\Cov(X\mid Y_t=y) \;=\; \Sigma + \tfrac14(\mu_1-\mu_2)(\mu_1-\mu_2)^\top ,
+\end{equation}
+and the between-mode term can exceed $tI$ along $\mu_1-\mu_2$, giving
+$a_i>1$. So $a_i > 1$ signals that the noisy observation fails to
+identify a single locally stable latent configuration.
+
+\begin{remark}[Scope of the interpretation]
+Strictly, $a_i>1$ is a diagnostic that posterior variance exceeds the
+noise scale. Multimodality is the typical, but not the only, mechanism:
+heavy-tailed unimodal $p_0$ (e.g.\ Laplace, Student-$t$) also produces
+$a_i>1$. ``Ambiguity'' is the geometric reading of the phenomenon, not a
+theorem.
+\end{remark}
+
+\begin{remark}[Mean versus tail]
+$\amb$ is an average over $y\sim p_t$ and can be small while
+$\sup_y a_{\max}(y)$ is large, if the expansive region carries little
+mass. In practice one should report
+both $\amb(t)$ and a high quantile of $(a_{\max}-1)_+$, since sampler
+failure is driven by trajectories that enter the expansive region, not by
+its measure.
+\end{remark}
 
 \subsection{Experiments}
 
