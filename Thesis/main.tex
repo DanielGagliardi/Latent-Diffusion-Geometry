@@ -15,6 +15,9 @@
 \DeclareMathOperator{\mmse}{mmse}
 \DeclareMathOperator*{\argmin}{arg\,min}
 
+
+
+
 \newcommand{\E}{\mathbb{E}}
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\N}{\mathcal{N}}
@@ -25,6 +28,12 @@
 \newcommand{\amb}{\mathcal{A}}
 \newcommand{\II}{\mathrm{I\!I}}
 \newcommand{\Frob}[1]{\lVert #1 \rVert_F}
+
+
+
+\newcommand{\Id}{\mathrm{Id}}
+\newcommand{\dd}{\,\mathrm{d}}
+\DeclareMathOperator{\lammax}{\lambda_{\max}}
 
 % --- Theorem Environments (Unified Hierarchy) ---
 \theoremstyle{plain}
@@ -77,6 +86,18 @@ A key challenge of this project has been stirking the balance between geometry: 
     This is the abstract of the thesis. 
 \end{abstract}
 
+\vspace{30mm}
+
+
+\begin{quote}
+    \itshape
+    Algebra is the offer made by the devil to the mathematician. The devil says: `I will give you this powerful machine, it will answer any question you like. All you need to do is give me your soul: give up geometry and you will have this marvellous machine.' 
+    \smallskip 
+    
+    \hfill --- \textbf{Michael Atiyah}
+\end{quote}
+
+
 \newpage
 
 \section{Introduction}
@@ -85,26 +106,226 @@ A key challenge of this project has been stirking the balance between geometry: 
 We started by looking at \citep{potaptchik2024linear}.
 
 \newpage
-
 \section{Background}
 \label{sec:background}
 
 \newpage
-
 \section{Anisotropic Stability Bound}
 \label{sec:aniso_stab_bound}
+
+We record a stability estimate for generator matching that keeps track of
+\emph{which} directions of a drift error are amplified and which are damped.
+The scalar one-sided Lipschitz estimate propagates every error with a single
+worst-case rate; it is sharp only in an isotropic sense. The estimate below
+replaces that scalar rate by the derivative flow of the learnt dynamics, a
+matrix that sees the direction of the error. We isolate the mechanism in the
+pure-transport case first: throughout Sections~\ref{subsec:mechanism}--%
+\ref{subsec:scalar} the diffusion coefficient is set to zero, and the additive%
+-noise case is recovered verbatim by averaging the derivative flow over the
+Brownian trajectories (Remark~\ref{rem:diffusion}).
+
+\subsection{The deterministic transport mechanism}
+\label{subsec:mechanism}
+
+Consider two time-dependent velocity fields $v_t,\hat v_t:\R^D\to\R^D$ for
+$0\le t\le T$, smooth enough in space and integrable in time that their
+characteristic flows are globally defined and differentiable in the initial
+condition:
+\begin{equation}
+  \tfrac{\dd}{\dd s}\Phi_{t,s}(x)=v_s\big(\Phi_{t,s}(x)\big),
+  \qquad
+  \tfrac{\dd}{\dd s}\hat\Phi_{t,s}(x)=\hat v_s\big(\hat\Phi_{t,s}(x)\big),
+  \qquad
+  \Phi_{t,t}=\hat\Phi_{t,t}=\Id .
+  \label{eq:flows}
+\end{equation}
+We write $\delta v_t:=v_t-\hat v_t$ for the velocity error and think of $v_t$ as
+the exact field and $\hat v_t$ as the learnt one.
+
+The estimate is built entirely from the derivative of the \emph{learnt} flow,
+\begin{equation}
+  \hat J_{t,T}(x):=D_x\hat\Phi_{t,T}(x),
+  \qquad
+  \tfrac{\dd}{\dd s}\hat J_{t,s}(x)=\nabla\hat v_s\big(\hat\Phi_{t,s}(x)\big)\,
+  \hat J_{t,s}(x),
+  \quad \hat J_{t,t}(x)=\Id .
+  \label{eq:jacobian-ode}
+\end{equation}
+Thus $\hat J_{t,T}(x)h$ is the terminal displacement at time $T$ produced by an
+infinitesimal perturbation $h$ applied at $(t,x)$ and transported by the learnt
+dynamics. The learnt flow acts as a magnifying glass on errors: an error
+committed at time $t$ is not scaled by a worst-case constant but carried by
+$\hat J_{t,T}$ along its own direction. The following identity makes this exact.
+
+\begin{lemma}[Telescoping identity along characteristics]
+\label{lem:telescope}
+For every initial point $x_0\in\R^D$, with $X_t:=\Phi_{0,t}(x_0)$ the exact
+characteristic,
+\begin{equation}
+  \Phi_{0,T}(x_0)-\hat\Phi_{0,T}(x_0)
+  =\int_0^T \hat J_{t,T}(X_t)\,\delta v_t(X_t)\dd t .
+  \label{eq:telescope}
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+Define $F(t):=\hat\Phi_{t,T}(X_t)$, which follows the exact dynamics up to time
+$t$ and the learnt dynamics from $t$ to $T$. Its endpoints are the fully learnt
+and fully exact terminal points, $F(0)=\hat\Phi_{0,T}(x_0)$ and
+$F(T)=\Phi_{0,T}(x_0)$. Differentiating in $t$,
+\[
+  \tfrac{\dd}{\dd t}F(t)
+  =\partial_t\hat\Phi_{t,T}(X_t)+D\hat\Phi_{t,T}(X_t)\,\dot X_t .
+\]
+Starting the learnt flow an instant later removes one short learnt step, so
+$\partial_t\hat\Phi_{t,T}(x)=-D\hat\Phi_{t,T}(x)\,\hat v_t(x)$. Together with
+$\dot X_t=v_t(X_t)$ and $D\hat\Phi_{t,T}(X_t)=\hat J_{t,T}(X_t)$ this gives
+\[
+  \tfrac{\dd}{\dd t}F(t)
+  =\hat J_{t,T}(X_t)\big(v_t(X_t)-\hat v_t(X_t)\big)
+  =\hat J_{t,T}(X_t)\,\delta v_t(X_t).
+\]
+Integrating $F(T)-F(0)$ from $0$ to $T$ yields \eqref{eq:telescope}.
+\end{proof}
+
+Identity~\eqref{eq:telescope} is the heart of the estimate. The error made at
+each time enters the terminal gap through the derivative flow evaluated in the
+actual direction of that error, with no worst-case constant and no loss.
+
+\subsection{From the telescoping identity to the matrix bound}
+\label{subsec:matrix}
+
+We turn the pathwise identity into a bound on the terminal laws by coupling.
+Let $X_0\sim\rho_0$ and transport it by both flows,
+$X_t:=\Phi_{0,t}(X_0)$ and $\hat X_t:=\hat\Phi_{0,t}(X_0)$, with terminal laws
+$\rho_T:=\mathrm{Law}(X_T)$ and $\hat\rho_T:=\mathrm{Law}(\hat X_T)$. Running both
+flows from the same $X_0$ is a coupling of $\rho_T$ and $\hat\rho_T$, so
+$W_1(\rho_T,\hat\rho_T)\le\E\|X_T-\hat X_T\|$. Applying
+Lemma~\ref{lem:telescope} pathwise at $x_0=X_0$ and the triangle inequality,
+\begin{equation}
+  W_1(\rho_T,\hat\rho_T)
+  \le\int_0^T\E\big\|\hat J_{t,T}(X_t)\,\delta v_t(X_t)\big\|\dd t
+  =\int_0^T\!\!\int_{\R^D}\big\|\hat J_{t,T}(x)\,\delta v_t(x)\big\|
+  \,\rho_t(\dd x)\dd t ,
+  \label{eq:coupling-bound}
+\end{equation}
+where the last step uses $X_t\sim\rho_t$. It remains only to name the quadratic
+form hidden in the norm.
+
+\begin{theorem}[Anisotropic $W_1$ stability]
+\label{thm:matrix}
+Define the pullback amplification metric
+\begin{equation}
+  G_{t,T}(x):=\hat J_{t,T}(x)^{\!\top}\hat J_{t,T}(x),
+  \qquad\text{so that}\qquad
+  \|\hat J_{t,T}(x)h\|^2=\big\langle h,\,G_{t,T}(x)\,h\big\rangle .
+  \label{eq:pullback}
+\end{equation}
+Then
+\begin{equation}
+  W_1(\rho_T,\hat\rho_T)
+  \le\int_0^T\!\!\int_{\R^D}
+  \big\langle \delta v_t(x),\,G_{t,T}(x)\,\delta v_t(x)\big\rangle^{1/2}
+  \,\rho_t(\dd x)\dd t .
+  \label{eq:matrix-bound}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Substitute the identity in \eqref{eq:pullback} into \eqref{eq:coupling-bound}.
+\end{proof}
+
+The matrix $G_{t,T}(x)$ is the Euclidean metric at the terminal time pulled back
+to the tangent space at $(t,x)$ by the learnt flow: it lives at time $t$ but
+measures squared lengths after transport to $T$. Its eigenvectors are the input
+directions at $(t,x)$ and its eigenvalues are the squared stretching factors of
+those directions. In the deterministic case \eqref{eq:pullback} is an exact
+identity, so no Cauchy--Schwarz slack is incurred in passing from the derivative
+flow to the quadratic form. The bound \eqref{eq:matrix-bound} is anisotropic
+precisely because it evaluates $G_{t,T}$ on the actual error direction
+$\delta v_t(x)$ rather than on the worst possible direction.
+
+\begin{remark}[Additive diffusion]
+\label{rem:diffusion}
+When both dynamics carry the same additive diffusion coefficient, the Brownian
+term has no derivative in the initial condition, so the learnt derivative flow
+$\hat J_{t,s}$ still solves the linear equation \eqref{eq:jacobian-ode} along
+each trajectory. The metric becomes the trajectory average
+$G_{t,T}(x)=\E\big[\hat J_{t,T}(x)^{\!\top}\hat J_{t,T}(x)\big]$, and Jensen's
+inequality turns the exact identity in \eqref{eq:pullback} into the upper bound
+$\E\|\hat J_{t,T}(x)\delta v_t(x)\|\le\langle\delta v_t,G_{t,T}\delta v_t
+\rangle^{1/2}$, so \eqref{eq:matrix-bound} holds unchanged. The deterministic
+case treated here is the load-bearing one.
+\end{remark}
+
+\subsection{Recovering the one-sided Lipschitz estimate}
+\label{subsec:scalar}
+
+The classical scalar estimate is the isotropic specialization of
+Theorem~\ref{thm:matrix}, obtained by discarding the direction of the error.
+Let $S_t(x):=\tfrac12\big(\nabla\hat v_t(x)+\nabla\hat v_t(x)^{\!\top}\big)$ be the
+symmetric part of the learnt Jacobian, and suppose the learnt field is one-sided
+Lipschitz with rate $\ell_t$, meaning
+\begin{equation}
+  \lambda_{\max}\big(S_t(x)\big)\le\ell_t
+  \qquad\text{for all }x .
+  \label{eq:osl}
+\end{equation}
+The condition constrains expansion only: it bounds the largest rate at which two
+trajectories separate, and places no bound on contraction or on the rotational
+part of $\nabla\hat v_t$.
+
+\begin{corollary}[Scalar one-sided Lipschitz bound]
+\label{cor:scalar}
+Under \eqref{eq:osl},
+\begin{equation}
+  G_{t,T}(x)\ \preceq\ \exp\!\Big(2\!\int_t^T\ell_s\dd s\Big)\,\Id ,
+  \label{eq:loewner}
+\end{equation}
+and consequently
+\begin{equation}
+  W_1(\rho_T,\hat\rho_T)
+  \le\int_0^T\exp\!\Big(\int_t^T\ell_s\dd s\Big)\,
+  \|\delta v_t\|_{L^1(\rho_t)}\dd t .
+  \label{eq:scalar-bound}
+\end{equation}
+\end{corollary}
+
+\begin{proof}
+Fix a direction $h$ and set $z_s:=\hat J_{t,s}(x)h$, which solves
+$\dot z_s=\nabla\hat v_s(\hat\Phi_{t,s}(x))\,z_s$ by \eqref{eq:jacobian-ode}.
+Only the symmetric part contributes to the growth of the norm, so
+\[
+  \tfrac{\dd}{\dd s}\|z_s\|^2
+  =2\big\langle z_s,\,S_s(\hat\Phi_{t,s}(x))\,z_s\big\rangle
+  \le 2\ell_s\|z_s\|^2 .
+\]
+Gr\"onwall's lemma gives
+$\|\hat J_{t,T}(x)h\|\le\exp\!\big(\int_t^T\ell_s\dd s\big)\|h\|$, which is
+\eqref{eq:loewner}. Inserting \eqref{eq:loewner} into \eqref{eq:matrix-bound}
+and using $\langle\delta v_t,G_{t,T}\delta v_t\rangle^{1/2}\le
+\exp(\int_t^T\ell_s\dd s)\|\delta v_t\|$ yields \eqref{eq:scalar-bound}.
+\end{proof}
+
+Corollary~\ref{cor:scalar} exhibits the scalar estimate as the Loewner
+domination \eqref{eq:loewner}: the matrix $G_{t,T}$ is replaced by its largest
+eigenvalue, uniformly over directions. The bound is correct, but it forgets the
+eigenstructure of $G_{t,T}$, and in particular treats a strongly contracted
+error direction as though it were the most expansive one. The next subsection
+makes this gap concrete in a two-direction model, where a normal error is
+carried by a contraction factor that the scalar constant cannot see.
+
+
+
 \newpage
-
-\section{Ridges}
-\label{sec:ridges}
-
-\newpage
-
 \section{Level Sets}
 \label{sec:level_sets}
 
 \newpage
+\section{Ridges}
+\label{sec:ridges}
 
+\newpage
 \section{Posterior Covariance Field}
 \label{sec:pcf}
 
@@ -284,7 +505,174 @@ failure is driven by trajectories that enter the expansive region, not by
 its measure.
 \end{remark}
 
-\subsection{Experiments}
+\subsection{MMSE-driven discretization}
+
+We consider the additive Gaussian perturbation
+\begin{equation}
+    X_t = X_0 + \sqrt{t}\,Z,
+    \qquad
+    Z \sim \mathcal{N}(0,I_D),
+\end{equation}
+so that, in the notation of the diffusion model,
+\begin{equation}
+    c_t = 1,
+    \qquad
+    \sigma_t^2=t.
+\end{equation}
+Let
+\begin{equation}
+    m_t(x) := \mathbb{E}[X_0 \mid X_t=x]
+\end{equation}
+denote the posterior mean and define the minimum mean-squared error
+\begin{equation}
+    \operatorname{MMSE}(t)
+    :=
+    \mathbb{E}\left[\|X_0-m_t(X_t)\|^2\right].
+\end{equation}
+Following the effective-dimension viewpoint, we write
+\begin{equation}
+    d_{\mathrm{eff}}(t)
+    :=
+    \frac{\operatorname{MMSE}(t)}{t},
+\end{equation}
+and hence
+\begin{equation}
+    \operatorname{MMSE}(t)
+    =
+    t\,d_{\mathrm{eff}}(t).
+    \label{eq:mmse-deff}
+\end{equation}
+
+\paragraph{Discretization error.}
+For additive Gaussian noise, Tweedie's formula gives
+\begin{equation}
+    s_t(x)
+    =
+    \frac{m_t(x)-x}{t}.
+\end{equation}
+The same martingale argument used to control the score variation in the discretized reverse process then yields, for two noise levels
+$t<t'$,
+\begin{equation}
+\begin{aligned}
+    &
+    \mathbb{E}
+    \left\|
+        s_t(X_t\mid t',X_{t'})
+        -
+        s_t(X_t)
+    \right\|^2
+    \\
+    &\qquad =
+    \frac{1}{t^2}
+    \left(
+        \operatorname{MMSE}(t')
+        -
+        \operatorname{MMSE}(t)
+    \right),
+\end{aligned}
+\label{eq:score-mmse}
+\end{equation}
+with the sign understood according to the direction in which the diffusion trajectory is traversed. Thus, for a sufficiently fine discretization with step size
+\begin{equation}
+    \Delta t_k := t_{k+1}-t_k,
+\end{equation}
+the contribution of the $k$-th interval is, up to higher-order terms,
+\begin{equation}
+    \mathcal{E}_k
+    \;\asymp\;
+    \frac{\left|\operatorname{MMSE}'(t_k)\right|}
+         {t_k^2}
+    (\Delta t_k)^2.
+    \label{eq:local-error}
+\end{equation}
+Consequently, the total discretization error is approximated by
+\begin{equation}
+    \mathcal{E}_{\mathrm{disc}}
+    \;\asymp\;
+    \sum_{k=0}^{K-1}
+    a(t_k)(\Delta t_k)^2,
+    \qquad
+    a(t)
+    :=
+    \frac{|\operatorname{MMSE}'(t)|}{t^2}.
+    \label{eq:discrete-objective}
+\end{equation}
+
+\paragraph{Optimal allocation of time steps.}
+We now choose the discretization points to minimize
+\eqref{eq:discrete-objective} subject to a fixed number $K$ of steps.
+Introduce the local step density
+\begin{equation}
+    n(t) := \frac{1}{\Delta t(t)}.
+\end{equation}
+In the continuum limit,
+\begin{equation}
+    K
+    \approx
+    \int n(t)\,dt,
+\end{equation}
+while
+\begin{equation}
+\begin{aligned}
+    \mathcal{E}_{\mathrm{disc}}
+    &\approx
+    \int a(t)\Delta t(t)\,dt
+    \\
+    &=
+    \int \frac{a(t)}{n(t)}\,dt.
+\end{aligned}
+\end{equation}
+Minimizing this functional subject to
+$\int n(t)\,dt=K$ gives
+\begin{equation}
+    n(t)\propto \sqrt{a(t)},
+\end{equation}
+and therefore
+\begin{equation}
+    \Delta t(t)
+    \propto
+    \frac{1}{\sqrt{a(t)}}
+    =
+    \frac{t}{\sqrt{|\operatorname{MMSE}'(t)|}}.
+    \label{eq:mmse-schedule}
+\end{equation}
+
+Finally, using \eqref{eq:mmse-deff},
+\begin{equation}
+    \operatorname{MMSE}'(t)
+    =
+    \frac{d}{dt}\left[t\,d_{\mathrm{eff}}(t)\right]
+    =
+    d_{\mathrm{eff}}(t)
+    +
+    t\,d_{\mathrm{eff}}'(t),
+\end{equation}
+so the resulting MMSE-adaptive discretization is
+\begin{equation}
+    \boxed{
+    \Delta t(t)
+    \propto
+    \frac{t}
+    {\sqrt{
+        \left|
+        d_{\mathrm{eff}}(t)
+        +
+        t\,d_{\mathrm{eff}}'(t)
+        \right|
+    }}
+    }.
+    \label{eq:natural-discretization}
+\end{equation}
+
+This prescription allocates more discretization points to regions in which the posterior uncertainty, measured by the MMSE, changes rapidly, while accounting for the $t^{-2}$ amplification of score errors at small noise scales.
+
+\subsection{Examples}
+
+\subsection{Summary}
+
+
+
+
 
 \newpage
 
