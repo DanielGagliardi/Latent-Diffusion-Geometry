@@ -164,69 +164,104 @@ The main argument for the manifold hypothesis is the curse of dimensionality, wh
 
 The justification of the manifold hypothesis is that it is a good canidate model for naturaly arising data, which tends to be locally continuous, and have fewer degrees of freedom. The space of natural images is far smaller than the space of all possible images, for example.
 
-There are variations of the manifold hypothesis, which make it less restrictive an assumption. These include:
+There are variations of the manifold hypothesis, with less restrictive assumptions. These include:
 \begin{itemize}
     \item The union of manifolds hypothesis \cite{brown2022union}, \cite{brown2022verifying}, which argue that standard manifold hypothesis is incomplete, and a union of manifolds of potentially different dimensions is a more realistic assumption
     \item The stratified space hypothesis \cite{aamari2024theory}, which extends this idea but allow for intersections between manifolds of different dimension
 \end{itemize}
 
-\subsection{Flow Matching as a Score Based Generative Model}
+\subsection{Flow Matching as a Score-Based Generative Model}
 
-Score Based Generative models (SGMs) \cite{ho2020denoising}, \cite{song2019generative}, \cite{song2020score} introduced the notion of generative modelling by estimating gradients of the density. In fact, in the abstract of \cite{song2019generative} the authors state ``Because gradients can be ill-defined and hard to estimate when the data resides on
-\textbf{low-dimensional manifolds}, we perturb the data with different levels of Gaussian noise, and jointly estimate the corresponding scores, i.e., the vector fields of gradients of the perturbed data distribution for all noise levels.''
+Score-Based Generative Models (SGMs) \cite{ho2020denoising, song2019generative, song2020score} formulate generative modeling by estimating gradients of the log probability density (the score function). As noted by \cite{song2019generative}: ``Because gradients can be ill-defined and hard to estimate when the data resides on \textbf{low-dimensional manifolds}, we perturb the data with different levels of Gaussian noise, and jointly estimate the corresponding scores, i.e., the vector fields of gradients of the perturbed data distribution for all noise levels.''
 
-Since the introduction of SGMs, they have been refined into their canonical form: flow matching models \cite{lipman2022flow}, \cite{albergo2025stochastic}. Here we give a brief overview.
+Flow Matching \cite{lipman2022flow, albergo2025stochastic} provides a continuous-time vector field framework that unifies and generalizes SGMs. Below, we outline the connection between Gaussian continuous flows and score matching.
 
-\subsubsection{Gaussian Flows and Score-Based Flow Matching}
-
-In generative modeling via flow matching, we aim to transform a base noise distribution $p_1 = \mathcal{N}(0, I_d)$ into a complex target data distribution $p_0$. Let $X_0 \sim p_0$ and $X_1 = \varepsilon \sim \mathcal{N}(0, I_d)$. The linear conditional flow $X_t = \varphi_t(X_0, \varepsilon)$ interpolates between data and noise according to:
-
-\[
+\paragraph{Gaussian Flows and Interpolation Schedule}
+In generative modeling via flow matching, we aim to construct a path transforming a base noise distribution $p_1 = \mathcal{N}(0, I_d)$ into a target data distribution $p_0$. Let $X_0 \sim p_0$ and $X_1 = \varepsilon \sim \mathcal{N}(0, I_d)$. The linear conditional flow $X_t = \varphi_t(X_0, \varepsilon)$ interpolates between data and noise according to:
+\begin{equation}
 X_t = c_t X_0 + \sigma_t \varepsilon
-\]
-
-where $c_t, \sigma_t$ are differentiable boundary-satisfying schedules with $c_0 = 1, \sigma_0 = 0$ and $c_1 = 0, \sigma_1 = 1$. Differentiating with respect to time yields the conditional vector field:
-
-\[
+\end{equation}
+where $c_t, \sigma_t \in \mathbb{R}$ are differentiable schedule functions satisfying the boundary conditions $c_0 = 1, \sigma_0 = 0$ and $c_1 = 0, \sigma_1 = 1$. Differentiating with respect to time $t$ yields the conditional velocity field:
+\begin{equation}
 \dot{X}_t = \dot{c}_t X_0 + \dot{\sigma}_t \varepsilon
-\]
+\end{equation}
 
 \paragraph{Vector Field Formulation}
-
-The marginal probability density $p_t$ of $X_t$ evolves according to the continuity equation $\partial_t p_t = -\nabla \cdot (v_t p_t)$. The unconditional ODE trajectory $\dot{x}_t = v_t(x_t)$ generates these exact same marginals $p_t$ when initialized at $x_0 \sim p_0$. The marginal velocity field $v_t(x)$ is given by the conditional expectation:
-
-\[
+ computational marginal probability density $p_t$ of $X_t$ evolves according to the continuity equation $\partial_t p_t = -\nabla \cdot (v_t p_t)$. The marginal vector field $v_t(x)$ that generates this trajectory is given by the conditional expectation:
+\begin{equation}
 v_t(x) = \mathbb{E}\left[\dot{X}_t \mid X_t = x\right] = \dot{c}_t \mathbb{E}\left[X_0 \mid X_t = x\right] + \dot{\sigma}_t \mathbb{E}\left[\varepsilon \mid X_t = x\right]
-\]
+\end{equation}
 
 \paragraph{Derivation via Tweedie's Formula}
+Because $p_t$ is the distribution of $c_t X_0$ corrupted by additive Gaussian noise $\sigma_t \varepsilon \sim \mathcal{N}(0, \sigma_t^2 I_d)$, Tweedie's denoising identity provides closed-form relationships between conditional expectations and the score function $\nabla_x \log p_t(x)$:
+\begin{equation}
+\mathbb{E}\left[\varepsilon \mid X_t = x\right] = -\sigma_t \nabla_x \log p_t(x)
+\end{equation}
+\begin{equation}
+\mathbb{E}\left[X_0 \mid X_t = x\right] = \frac{x + \sigma_t^2 \nabla_x \log p_t(x)}{c_t}
+\end{equation}
 
-Because $p_t$ is the distribution of $c_t X_0$ corrupted by Gaussian noise $\sigma_t \varepsilon \sim \mathcal{N}(0, \sigma_t^2 I_d)$, Tweedie's denoising identity provides closed-form expressions for the conditional expectations in terms of the score function $\nabla \ln p_t(x)$:
+Substituting equations (4) and (5) into the marginal velocity expression yields:
+\begin{align}
+v_t(x) &= \dot{c}_t \left( \frac{x + \sigma_t^2 \nabla_x \log p_t(x)}{c_t} \right) + \dot{\sigma}_t \left( -\sigma_t \nabla_x \log p_t(x) \right) \nonumber \\
+&= \frac{\dot{c}_t}{c_t} x + \left( \frac{\dot{c}_t \sigma_t^2}{c_t} - \dot{\sigma}_t \sigma_t \right) \nabla_x \log p_t(x) \nonumber \\
+&= \frac{\dot{c}_t}{c_t} x + \sigma_t^2 \left( \frac{\dot{c}_t}{c_t} - \frac{\dot{\sigma}_t}{\sigma_t} \right) \nabla_x \log p_t(x)
+\end{align}
 
-\[
-\mathbb{E}\left[\varepsilon \mid X_t = x\right] = -\sigma_t \nabla \ln p_t(x)
-\]
+\paragraph{Equivalence of Parameterizations}
+Equation (6) demonstrates that the velocity field $v_t(x)$ is completely determined by the schedules $c_t, \sigma_t$ and the score function $\nabla_x \log p_t(x)$. Consequently, the following target parameterizations are equivalent up to linear transformations:
+\begin{equation}
+\nabla_x \log p_t(x) \quad \iff \quad \mathbb{E}\left[\varepsilon \mid X_t = x\right] \quad \iff \quad \mathbb{E}\left[X_0 \mid X_t = x\right] \quad \iff \quad v_t(x)
+\end{equation}
+Sampling via the deterministic flow ODE $\dot{x}_t = v_t(x_t)$ parameterized by a score model recovers the probability flow ODE (e.g., DDIM \cite{song2020denoising}).
 
-\[
-\mathbb{E}\left[X_0 \mid X_t = x\right] = \frac{x + \sigma_t^2 \nabla \ln p_t(x)}{c_t}
-\]
+\subsection{Tweedie's 1\textsuperscript{st} and 2\textsuperscript{nd} Order Formulae}
 
-Substituting these expectations into the expression for $v_t(x)$ yields:
+Consider the canonical Gaussian perturbation model $X_t = X_0 + \sigma_t \varepsilon$, where $\varepsilon \sim \mathcal{N}(0, I_d)$ and $X_0 \sim p_0$. The conditional density of $X_t$ given $X_0 = x_0$ is:
+\begin{equation}
+p_t(x \mid x_0) = (2\pi \sigma_t^2)^{-d/2} \exp\left( -\frac{\|x - x_0\|^2}{2\sigma_t^2} \right)
+\end{equation}
+The marginal density $p_t(x)$ is:
+\begin{equation}
+p_t(x) = \int p_t(x \mid x_0) p_0(x_0) \, dx_0
+\end{equation}
 
-\begin{align*}
-v_t(x) &= \dot{c}_t \left( \frac{x + \sigma_t^2 \nabla \ln p_t(x)}{c_t} \right) + \dot{\sigma}_t \left( -\sigma_t \nabla \ln p_t(x) \right) \\
-&= \frac{\dot{c}_t}{c_t} x + \left( \frac{\dot{c}_t \sigma_t^2}{c_t} - \dot{\sigma}_t \sigma_t \right) \nabla \ln p_t(x) \\
-&= \frac{\dot{c}_t}{c_t} x + \sigma_t^2 \left[ \frac{\dot{c}_t}{c_t} - \frac{\dot{\sigma}_t}{\sigma_t} \right] \nabla \ln p_t(x)
-\end{align*}
+\subsubsection{First Derivative (Score Function)}
+Differentiating $p_t(x)$ under the integral sign:
+\begin{equation}
+\nabla_x p_t(x) = -\frac{1}{\sigma_t^2} \int (x - x_0) p_t(x \mid x_0) p_0(x_0) \, dx_0
+\end{equation}
+Dividing by $p_t(x)$ and applying Bayes' rule $p(x_0 \mid x) = \frac{p_t(x \mid x_0) p_0(x_0)}{p_t(x)}$ yields Tweedie's first-order formula:
+\begin{equation}
+\nabla_x \log p_t(x) = \frac{\nabla_x p_t(x)}{p_t(x)} = \frac{\mathbb{E}[X_0 \mid X_t = x] - x}{\sigma_t^2}
+\end{equation}
 
-\paragraph{Implications and Equivalence}
+\subsubsection{Second Derivative (Hessian Matrix/Score Jacobian)}
+Expanding the Hessian matrix of the log-marginal density:
+\begin{equation}
+\nabla_x^2 \log p_t(x) = \frac{\nabla_x^2 p_t(x)}{p_t(x)} - \left( \nabla_x \log p_t(x) \right) \left( \nabla_x \log p_t(x) \right)^T
+\end{equation}
+Differentiating $\nabla_x p_t(x)$ a second time:
+\begin{equation}
+\nabla_x^2 p_t(x) = \int \left( -\frac{1}{\sigma_t^2} I_d + \frac{(x - x_0)(x - x_0)^T}{\sigma_t^4} \right) p_t(x \mid x_0) p_0(x_0) \, dx_0
+\end{equation}
+Dividing by $p_t(x)$:
+\begin{equation}
+\frac{\nabla_x^2 p_t(x)}{p_t(x)} = -\frac{1}{\sigma_t^2} I_d + \frac{1}{\sigma_t^4} \mathbb{E}\left[(x - X_0)(x - X_0)^T \mid X_t = x\right]
+\end{equation}
 
-The velocity field $v_t(x)$ is completely determined by the schedules $c_t, \sigma_t$ and the score function $\nabla \ln p_t(x)$. The parameterized target models are related by linear transformations:
-\[
-\nabla \ln p_t(x) \quad \iff \quad \mathbb{E}\left[\varepsilon \mid X_t = x\right] \quad \iff \quad \mathbb{E}\left[X_0 \mid X_t = x\right] \quad \iff \quad v_t(x)
-\]
+\subsubsection{Posterior Covariance Relation}
+Substituting (11) and (14) into (12):
+\begin{align}
+\nabla_x^2 \log p_t(x) &= -\frac{1}{\sigma_t^2} I_d + \frac{1}{\sigma_t^4} \Big( \mathbb{E}\left[(x - X_0)(x - X_0)^T \mid X_t = x\right] \nonumber \\
+&\quad - \mathbb{E}\left[x - X_0 \mid X_t = x\right] \mathbb{E}\left[x - X_0 \mid X_t = x\right]^T \Big)
+\end{align}
+Since $x$ is non-random given $X_t = x$, the bracketed term is the conditional covariance $\operatorname{Cov}(X_0 \mid X_t = x)$. Thus, Tweedie's second-order formula simplifies to:
+\begin{equation}
+\nabla_x^2 \log p_t(x) = \frac{1}{\sigma_t^4} \operatorname{Cov}(X_0 \mid X_t = x) - \frac{1}{\sigma_t^2} I_d
+\end{equation}
 
-Learning any one of these targets allows immediate recovery of the others. Sampling via the flow ODE $\dot{x}_t = v_t(x_t)$ using a score model $\nabla \ln p_t$ is mathematically equivalent to running the probability flow (DDIM \cite{song2020denoising}) ODE in diffusion models.
+This identity will be used later in \autoref{sec:pcf}.
 
 
 \newpage
@@ -234,16 +269,10 @@ Learning any one of these targets allows immediate recovery of the others. Sampl
 \label{sec:aniso_stab_bound}
 
 We record a stability estimate for generator matching that keeps track of
-\emph{which} directions of a drift error are amplified and which are damped.
+\emph{which} directions of a drift error are amplified and which are dampened. 
 The scalar one-sided Lipschitz estimate propagates every error with a single
-worst-case rate; it is sharp only in an isotropic sense. The estimate below
-replaces that scalar rate by the derivative flow of the learnt dynamics, a
-matrix that sees the direction of the error. We isolate the mechanism in the
-pure-transport case first: throughout Sections~\ref{subsec:mechanism}--%
-\ref{subsec:scalar} the diffusion coefficient is set to zero, and the additive%
--noise case is recovered verbatim by averaging the derivative flow over the
-Brownian trajectories (Remark~\ref{rem:diffusion}).
-
+worst-case rate, thereby being sharp only in an isotropic sense. The estimate below
+replaces that scalar rate by the derivative flow of the learnt dynamics, a matrix that sees the direction of the error.
 \subsection{The deterministic transport mechanism}
 \label{subsec:mechanism}
 
@@ -259,10 +288,10 @@ condition:
   \Phi_{t,t}=\hat\Phi_{t,t}=\Id .
   \label{eq:flows}
 \end{equation}
-We write $\delta v_t:=v_t-\hat v_t$ for the velocity error and think of $v_t$ as
-the exact field and $\hat v_t$ as the learnt one.
+We write $\delta v_t:=v_t-\hat v_t$ for the velocity error and let $v_t$ be
+the exact field and $\hat v_t$ the learnt one.
 
-The estimate is built entirely from the derivative of the \emph{learnt} flow,
+The estimate is built entirely from the derivative of the \emph{learnt} flow, which is availible to us from its network,
 \begin{equation}
   \hat J_{t,T}(x):=D_x\hat\Phi_{t,T}(x),
   \qquad
@@ -273,8 +302,7 @@ The estimate is built entirely from the derivative of the \emph{learnt} flow,
 \end{equation}
 Thus $\hat J_{t,T}(x)h$ is the terminal displacement at time $T$ produced by an
 infinitesimal perturbation $h$ applied at $(t,x)$ and transported by the learnt
-dynamics. The learnt flow acts as a magnifying glass on errors: an error
-committed at time $t$ is not scaled by a worst-case constant but carried by
+dynamics. An error at time $t$ is not scaled by a worst-case constant but carried by
 $\hat J_{t,T}$ along its own direction. The following identity makes this exact.
 
 \begin{lemma}[Telescoping identity along characteristics]
@@ -297,7 +325,7 @@ $F(T)=\Phi_{0,T}(x_0)$. Differentiating in $t$,
   \tfrac{\dd}{\dd t}F(t)
   =\partial_t\hat\Phi_{t,T}(X_t)+D\hat\Phi_{t,T}(X_t)\,\dot X_t .
 \]
-Starting the learnt flow an instant later removes one short learnt step, so
+By starting the learnt flow an instant later we remove one short learnt step, so
 $\partial_t\hat\Phi_{t,T}(x)=-D\hat\Phi_{t,T}(x)\,\hat v_t(x)$. Together with
 $\dot X_t=v_t(X_t)$ and $D\hat\Phi_{t,T}(X_t)=\hat J_{t,T}(X_t)$ this gives
 \[
@@ -308,9 +336,7 @@ $\dot X_t=v_t(X_t)$ and $D\hat\Phi_{t,T}(X_t)=\hat J_{t,T}(X_t)$ this gives
 Integrating $F(T)-F(0)$ from $0$ to $T$ yields \eqref{eq:telescope}.
 \end{proof}
 
-Identity~\eqref{eq:telescope} is the heart of the estimate. The error made at
-each time enters the terminal gap through the derivative flow evaluated in the
-actual direction of that error, with no worst-case constant and no loss.
+Identity~\eqref{eq:telescope} highlights that the error made at each time enters the terminal gap through the derivative flow evaluated in the actual direction of that error, with no worst-case constant and no loss. 
 
 \subsection{From the telescoping identity to the matrix bound}
 \label{subsec:matrix}
@@ -356,7 +382,7 @@ Substitute the identity in \eqref{eq:pullback} into \eqref{eq:coupling-bound}.
 \end{proof}
 
 The matrix $G_{t,T}(x)$ is the Euclidean metric at the terminal time pulled back
-to the tangent space at $(t,x)$ by the learnt flow: it lives at time $t$ but
+to the tangent space at $(t,x)$ by the learnt flow; it lives at time $t$ but
 measures squared lengths after transport to $T$. Its eigenvectors are the input
 directions at $(t,x)$ and its eigenvalues are the squared stretching factors of
 those directions. In the deterministic case \eqref{eq:pullback} is an exact
@@ -365,23 +391,10 @@ flow to the quadratic form. The bound \eqref{eq:matrix-bound} is anisotropic
 precisely because it evaluates $G_{t,T}$ on the actual error direction
 $\delta v_t(x)$ rather than on the worst possible direction.
 
-\begin{remark}[Additive diffusion]
-\label{rem:diffusion}
-When both dynamics carry the same additive diffusion coefficient, the Brownian
-term has no derivative in the initial condition, so the learnt derivative flow
-$\hat J_{t,s}$ still solves the linear equation \eqref{eq:jacobian-ode} along
-each trajectory. The metric becomes the trajectory average
-$G_{t,T}(x)=\E\big[\hat J_{t,T}(x)^{\!\top}\hat J_{t,T}(x)\big]$, and Jensen's
-inequality turns the exact identity in \eqref{eq:pullback} into the upper bound
-$\E\|\hat J_{t,T}(x)\delta v_t(x)\|\le\langle\delta v_t,G_{t,T}\delta v_t
-\rangle^{1/2}$, so \eqref{eq:matrix-bound} holds unchanged. The deterministic
-case treated here is the load-bearing one.
-\end{remark}
-
 \subsection{Recovering the one-sided Lipschitz estimate}
 \label{subsec:scalar}
 
-The classical scalar estimate is the isotropic specialization of
+The classical scalar estimate is the isotropic specialisation of
 Theorem~\ref{thm:matrix}, obtained by discarding the direction of the error.
 Let $S_t(x):=\tfrac12\big(\nabla\hat v_t(x)+\nabla\hat v_t(x)^{\!\top}\big)$ be the
 symmetric part of the learnt Jacobian, and suppose the learnt field is one-sided
@@ -391,8 +404,7 @@ Lipschitz with rate $\ell_t$, meaning
   \qquad\text{for all }x .
   \label{eq:osl}
 \end{equation}
-The condition constrains expansion only: it bounds the largest rate at which two
-trajectories separate, and places no bound on contraction or on the rotational
+The condition constrains expansion by only bounding the largest rate at which two trajectories separate, and places no bound on contraction or on the rotational
 part of $\nabla\hat v_t$.
 
 \begin{corollary}[Scalar one-sided Lipschitz bound]
@@ -429,11 +441,8 @@ and using $\langle\delta v_t,G_{t,T}\delta v_t\rangle^{1/2}\le
 
 Corollary~\ref{cor:scalar} exhibits the scalar estimate as the Loewner
 domination \eqref{eq:loewner}: the matrix $G_{t,T}$ is replaced by its largest
-eigenvalue, uniformly over directions. The bound is correct, but it forgets the
-eigenstructure of $G_{t,T}$, and in particular treats a strongly contracted
-error direction as though it were the most expansive one. The next subsection
-makes this gap concrete in a two-direction model, where a normal error is
-carried by a contraction factor that the scalar constant cannot see.
+eigenvalue, uniformly over directions. While bound is correct, it does not make use of the
+eigenstructure of $G_{t,T}$, and in particular treats a strongly contracted error direction as though it were the most expansive one. The gap between the scalar and anisotropic bounds can be exacerbated when errors lie mostly in the normal direction to a target manifold, as we will see.
 
 
 
@@ -491,10 +500,10 @@ so Corollary~\ref{cor:scalar} propagates \emph{both} error components with the
 tangent expansion factor $e^{\int_t^T\ell}$. It replaces the normal contraction
 $e^{-\int_t^T\gamma}$ by expansion, overestimating the contribution of a normal
 error by the factor $e^{\int_t^T(\ell_s+\gamma_s)\dd s}$. When the normal block
-is strongly contracting---as it is near a terminal manifold, where
-$\gamma_t\sim(1-t)^{-1}$ and $e^{-\int_t^T\gamma}$ decays polynomially in
-$1-t$---this overestimate is the entire difference between a persistent error
-and a damped one. This is where the anisotropy pays.
+is strongly contracting (which is the case near a terminal manifold, where
+$\gamma_t\sim(T-t)^{-1}$ and $e^{-\int_t^T\gamma}$ decays polynomially in
+$T-t$) this overestimate is the difference between a persistent error
+and a damped one.
  
 \subsection{What the estimate requires of the error}
 \label{subsec:direction}
@@ -503,46 +512,16 @@ The two bounds depend on the error through different amounts of information, and
 this raises a natural objection. The scalar bound \eqref{eq:scalar-bound} uses
 only the magnitude $\|\delta v_t\|_{L^1(\rho_t)}$. The matrix bound
 \eqref{eq:matrix-bound} uses the quadratic form
-$\langle\delta v_t,G_{t,T}\delta v_t\rangle$, that is, the \emph{direction} of
+$\langle\delta v_t,G_{t,T}\delta v_t\rangle$, that is, the direction of
 $\delta v_t$ relative to the eigenframe of $G_{t,T}$. Since the exact field
 $v_t$ is unknown, the error $\delta v_t=v_t-\hat v_t$ is never observed, and its
-direction still less so. It is not immediate that the matrix bound is any more
-usable than the scalar one.
+direction even less so. Therefore, we conclude that this matrix bound, while tighter, is not any more practical than the scalar bound. 
+
+Despite observing that $\delta v_t$ was usually aligned with $v_t$, and that in different instances of training  $\delta v_t$ seemed to be Gaussian, not distributional behaviour of $\delta v_t$ was understood.
  
-The resolution is that neither bound is an estimator: both are a priori
-certificates. The scalar bound is valid because it implicitly places
-$\delta v_t$ along the most expansive eigenvector of $G_{t,T}$, which is exactly
-the source of its looseness. The matrix bound is a family of certificates
-indexed by hypotheses on where the error lies, and it becomes informative as
-soon as one can argue, on structural grounds, that the error concentrates in
-contracted directions. The direction is supplied not by measuring $\delta v_t$
-but by the geometry of the \emph{target}.
  
-Near a smooth embedded manifold this structure is explicit. The exact velocity
-$v_t$, which is fixed by the score of the noised target, admits to leading order
-a canonical decomposition: a rigid normal restoring field of model-independent
-functional form, a tangential component set by the intrinsic density on the
-manifold, and a moving ridge that locates the normal zero of the field. Any
-learnt error is then graded in the \emph{same} frame into a normal-amplitude
-component, a tangential-density component, and a ridge-displacement component.
-The matrix bound assigns each its own weight through $G_{t,T}$: normal-amplitude
-errors are damped by the normal contraction factor of
-\autoref{subsec:two-direction}, tangential-density errors are carried by the
-tangential expansion factor and persist, and ridge-displacement errors are
-normal but enter with the singular weight $\sigma_t^{-2}$, since a normal
-displacement of the ridge by $\Delta$ changes the leading normal field by
-$\Delta/\sigma_t^{2}$. The estimate never requires $\delta v_t$ to be known; it
-requires the target to furnish a fixed anisotropic frame in which any error is
-automatically decomposed. We construct this frame in \autoref{sec:pcf}.
- 
-One assumption must be stated now, because it is used throughout. The projectors
-defining the frame---$P_t$ onto the tangent block and $Q_t=I-P_t$ onto the
-normal block---must be a single field, determined by the target and shared
-across all learnt fields. Re-deriving the frame from each model's own error
-would reintroduce model dependence into the weights and render comparisons
-between models meaningless. We therefore fix $P_t$ once, from the target
-geometry, and read every error in that frame; concretely, $P_t$ is built from
-the spectrum of the posterior-covariance operator $A_t$ in \autoref{sec:pcf}.
+One assumption is that the projectors
+defining the frame ($P_t$ onto the tangent block and $Q_t=I-P_t$ onto the normal block) must be a single field, determined by the target and shared across all learnt fields. Re-deriving the frame from each model's own error would reintroduce model dependence into the weights and make comparisons between models meaningless. We therefore fix $P_t$ once, from the target density geometry, and read every error in that frame. So $P_t$ is built from the spectrum of the posterior-covariance operator $A_t$ in \autoref{sec:pcf}.
 
 \newpage
 
@@ -550,7 +529,7 @@ the spectrum of the posterior-covariance operator $A_t$ in \autoref{sec:pcf}.
 \section{Level Sets}
 \label{sec:level_sets}
 
- as we smooth data which lies on or is concentrated around a manifold two main affects occur. Smoothing in the normal direction and smoothing and tangent direction. Smoothing in the tangent direction makes a density more uniform along a manifold. Therefore our level sets should be better behaved.
+ As we smooth data which lies on (or is concentrated around) a manifold two main affects occur: smoothing in the normal direction, and smoothing and tangent direction. Smoothing in the tangent direction makes a density more uniform along a manifold, therefore our level sets should be better behaved. Here we investigate how level sets evolve.
 
 Let $p^\star : \mathbb{R}^D \to \mathbb{R}_+$ denote the initial density, and let
 $p_{\sigma}$ denote its Gaussian-smoothed version,
@@ -600,11 +579,10 @@ where
     P_T := I-nn^\top
 \end{equation}
 is the orthogonal projection onto the tangent space
-$T_x\mathcal{M}_c^\sigma$. Thus, the variation of the normal field---and hence
-the local curvature of the level set---is determined by the Hessian of the
-density.
+$T_x\mathcal{M}_c^\sigma$. Thus, the variation of the normal field, and hence
+the local curvature of the level set, is determined by the Hessian of the density.
 
-Gaussian smoothing regularizes not only the density itself, but all of its
+Gaussian smoothing regularises not only the density itself, but all of its
 spatial derivatives. In particular, for any $k\geq 0$,
 \begin{equation}
     D^k p_{\sigma}
@@ -630,9 +608,7 @@ domain. Writing $\widehat{p}_{\sigma}$ for the Fourier transform,
     \label{eq:fourier-smoothing}
 \end{equation}
 Thus a Fourier mode of spatial frequency $\|\xi\|$ is attenuated by
-$\exp(-\sigma^2\|\xi\|^2/2)$: high-frequency components decay quadratically
-faster in frequency. Consequently, Gaussian smoothing preferentially removes
-the fine-scale spatial variation of $p^\star$.
+$\exp(-\sigma^2\|\xi\|^2/2)$. High-frequency components decay quadratically faster in frequency. Consequently, Gaussian smoothing preferentially removes the fine-scale spatial variation of $p^\star$.
 
 The effect on the geometry of a level set follows directly from
 \eqref{eq:normal-derivative}. Its shape operator is
@@ -686,7 +662,7 @@ For example, two components of a superlevel set may merge through a
 neck as $\sigma$ increases. Thus, while smoothing removes fine-scale
 spatial variation from the density and its derivatives, it should not be
 interpreted as a monotone decrease of the curvature of every individual
-level set. The rigorous statement is instead that Gaussian smoothing
+level set. Instead that Gaussian smoothing
 preferentially suppresses spatial frequencies at scales smaller than
 $\sigma$, and therefore suppresses fine-scale geometric variation encoded
 by the derivatives of the density.
@@ -744,7 +720,7 @@ Hence increasing $\sigma$ progressively removes increasingly fine-scale
 structure, with spatial frequency $\|\xi\|$ suppressed according to
 $e^{-\sigma^2\|\xi\|^2}$.
 
-This relates to the conventional wisdom where we need more refined time steps as we approach closer to our final density to capture the higher frequency structure of density. This is particularly apparent for image and audio data. JPEG compression takes advantage of writing the image as a Fourier decomposition, and in doing so discard the high frequency terms which are not noticeable to the human eye. 
+This relates to the conventional wisdom where more refined time steps are required as we approach closer to our final density to capture the higher frequency structure of density. This is particularly apparent for image and audio data. JPEG compression takes advantage of writing the image as a Fourier decomposition, and in doing so discards the high frequency terms which are not noticeable to the human eye. 
 
 \newpage
 
