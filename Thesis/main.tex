@@ -13,7 +13,7 @@
 \DeclareMathOperator{\Var}{Var}
 \DeclareMathOperator{\tr}{tr}
 \DeclareMathOperator{\dist}{dist}
-\DeclareMathOperator{\mmse}{mmse}
+\DeclareMathOperator{\mmse}{MMSE}
 \DeclareMathOperator*{\argmin}{arg\,min}
 
 
@@ -166,17 +166,17 @@ The justification of the manifold hypothesis is that it is a good canidate model
 
 There are variations of the manifold hypothesis, with less restrictive assumptions. These include:
 \begin{itemize}
-    \item The union of manifolds hypothesis \cite{brown2022union}, \cite{brown2022verifying}, which argue that standard manifold hypothesis is incomplete, and a union of manifolds of potentially different dimensions is a more realistic assumption
-    \item The stratified space hypothesis \cite{aamari2024theory}, which extends this idea but allow for intersections between manifolds of different dimension
+    \item The union of manifolds hypothesis \citep{brown2022union}, \citep{brown2022verifying}, which argue that standard manifold hypothesis is incomplete, and a union of manifolds of potentially different dimensions is a more realistic assumption
+    \item The stratified space hypothesis \citep{aamari2024theory}, which extends this idea but allow for intersections between manifolds of different dimension
 \end{itemize}
 
 \subsection{Flow Matching as a Score-Based Generative Model}
 
-Score-Based Generative Models (SGMs) \cite{ho2020denoising, song2019generative, song2020score} formulate generative modeling by estimating gradients of the log probability density (the score function). As noted by \cite{song2019generative}: ``Because gradients can be ill-defined and hard to estimate when the data resides on \textbf{low-dimensional manifolds}, we perturb the data with different levels of Gaussian noise, and jointly estimate the corresponding scores, i.e., the vector fields of gradients of the perturbed data distribution for all noise levels.''
+Score-Based Generative Models (SGMs) \citep{ho2020denoising, song2019generative, song2020score} formulate generative modeling by estimating gradients of the log probability density (the score function). As noted by \citep{song2019generative}: ``Because gradients can be ill-defined and hard to estimate when the data resides on \textbf{low-dimensional manifolds}, we perturb the data with different levels of Gaussian noise, and jointly estimate the corresponding scores, i.e., the vector fields of gradients of the perturbed data distribution for all noise levels.''
 
-Flow Matching \cite{lipman2022flow, albergo2025stochastic} provides a continuous-time vector field framework that unifies and generalizes SGMs. Below, we outline the connection between Gaussian continuous flows and score matching.
+Flow Matching \citep{lipman2022flow, albergo2025stochastic} provides a continuous-time vector field framework that unifies and generalizes SGMs. Below, we outline the connection between Gaussian continuous flows and score matching.
 
-\paragraph{Gaussian Flows and Interpolation Schedule}
+\paragraph{Gaussian Flows and Interpolation Schedule.}
 In generative modeling via flow matching, we aim to construct a path transforming a base noise distribution $p_1 = \mathcal{N}(0, I_d)$ into a target data distribution $p_0$. Let $X_0 \sim p_0$ and $X_1 = \varepsilon \sim \mathcal{N}(0, I_d)$. The linear conditional flow $X_t = \varphi_t(X_0, \varepsilon)$ interpolates between data and noise according to:
 \begin{equation}
 X_t = c_t X_0 + \sigma_t \varepsilon
@@ -186,13 +186,13 @@ where $c_t, \sigma_t \in \mathbb{R}$ are differentiable schedule functions satis
 \dot{X}_t = \dot{c}_t X_0 + \dot{\sigma}_t \varepsilon
 \end{equation}
 
-\paragraph{Vector Field Formulation}
+\paragraph{Vector Field Formulation.}
  computational marginal probability density $p_t$ of $X_t$ evolves according to the continuity equation $\partial_t p_t = -\nabla \cdot (v_t p_t)$. The marginal vector field $v_t(x)$ that generates this trajectory is given by the conditional expectation:
 \begin{equation}
 v_t(x) = \mathbb{E}\left[\dot{X}_t \mid X_t = x\right] = \dot{c}_t \mathbb{E}\left[X_0 \mid X_t = x\right] + \dot{\sigma}_t \mathbb{E}\left[\varepsilon \mid X_t = x\right]
 \end{equation}
 
-\paragraph{Derivation via Tweedie's Formula}
+\paragraph{Derivation via Tweedie's Formula.}
 Because $p_t$ is the distribution of $c_t X_0$ corrupted by additive Gaussian noise $\sigma_t \varepsilon \sim \mathcal{N}(0, \sigma_t^2 I_d)$, Tweedie's denoising identity provides closed-form relationships between conditional expectations and the score function $\nabla_x \log p_t(x)$:
 \begin{equation}
 \mathbb{E}\left[\varepsilon \mid X_t = x\right] = -\sigma_t \nabla_x \log p_t(x)
@@ -208,12 +208,12 @@ v_t(x) &= \dot{c}_t \left( \frac{x + \sigma_t^2 \nabla_x \log p_t(x)}{c_t} \righ
 &= \frac{\dot{c}_t}{c_t} x + \sigma_t^2 \left( \frac{\dot{c}_t}{c_t} - \frac{\dot{\sigma}_t}{\sigma_t} \right) \nabla_x \log p_t(x)
 \end{align}
 
-\paragraph{Equivalence of Parameterizations}
-Equation (6) demonstrates that the velocity field $v_t(x)$ is completely determined by the schedules $c_t, \sigma_t$ and the score function $\nabla_x \log p_t(x)$. Consequently, the following target parameterizations are equivalent up to linear transformations:
+\paragraph{Equivalence of Parameterisations.}
+Equation (6) demonstrates that the velocity field $v_t(x)$ is completely determined by the schedules $c_t, \sigma_t$ and the score function $\nabla_x \log p_t(x)$. Consequently, the following target parameterisations are equivalent up to linear transformations:
 \begin{equation}
 \nabla_x \log p_t(x) \quad \iff \quad \mathbb{E}\left[\varepsilon \mid X_t = x\right] \quad \iff \quad \mathbb{E}\left[X_0 \mid X_t = x\right] \quad \iff \quad v_t(x)
 \end{equation}
-Sampling via the deterministic flow ODE $\dot{x}_t = v_t(x_t)$ parameterized by a score model recovers the probability flow ODE (e.g., DDIM \cite{song2020denoising}).
+Sampling via the deterministic flow ODE $\dot{x}_t = v_t(x_t)$ parameterized by a score model recovers the probability flow ODE (e.g., DDIM \citep{song2020denoising}).
 
 \subsection{Tweedie's 1\textsuperscript{st} and 2\textsuperscript{nd} Order Formulae}
 
@@ -265,6 +265,7 @@ This identity will be used later in \autoref{sec:pcf}.
 
 
 \newpage
+
 \section{Anisotropic Stability Bound}
 \label{sec:aniso_stab_bound}
 
@@ -751,8 +752,6 @@ This becomes immediately obvious when considering smoothing a pair of distinct B
     \label{fig:ridge_comparison}
 \end{figure}
 
-
-
 With this intuition it becomes fairly easy to rediscover the definition of a ridge. It is where the normal component of our changing density is zero. But a priori we do not know which components are normal. 
 
 The resolution is to let the density define its own normal directions. At a
@@ -767,7 +766,7 @@ and order the eigenvalues of $H(x)$ as
 \]
 with orthonormal eigenvectors $u_1(x), \dots, u_D(x)$. The directions of
 sharpest downward curvature are those with the most negative eigenvalues, so we
-\emph{define} the normal space at $x$ to be the span of the bottom $D-d$
+define the normal space at $x$ to be the span of the bottom $D-d$
 eigenvectors, and the tangent space to be the span of the top $d$. Writing
 $V(x) = [u_{d+1}(x) \mid \cdots \mid u_D(x)]$ for the normal frame,
 $L(x) = V(x)V(x)^\top$ is the projector onto the normal space. This is the point
@@ -800,34 +799,40 @@ $p_\sigma$ are the same set. Since $\log$ is strictly increasing, $\nabla \log
 p_\sigma = p_\sigma^{-1}\nabla p_\sigma$ vanishes exactly where $\nabla p_\sigma$
 does, and the two Hessians differ by the rank-one term $p_\sigma^{-1}\nabla
 p_\sigma \nabla p_\sigma^\top$, which vanishes wherever the gradient does. On the
-ridge, then, gradient, projected gradient and normal eigenframe all agree
+ridge gradient, projected gradient and normal eigenframe all agree
 between $p_\sigma$ and $\log p_\sigma$. We work with $\log p_\sigma$ from now on,
 for two reasons: it is the object the generative model actually learns, its
-gradient being the score; and, as Genovese et al. note, the surrogate property
-holds in an $O(1)$ neighbourhood of $M$ for the log-density but only in an
+gradient being the score; and as shown in \citep{genovese2014nonparametric}, the surrogate property \autoref{thm:surrogate_ridge}
+holds in an $O(1)$ neighbourhood of $\M$ for the log-density but only in an
 $O(\sigma)$ neighbourhood for the density itself.
 
-Inside the tube of radius $O(\sigma)$ around the (rescaled) manifold, the score
-is overwhelmingly a normal restoring field. Genovese et al.\ show that
+\begin{theorem}[Surrogate Ridge Approximation, Theorem~7 of \citep{genovese2014nonparametric}]
+    \label{thm:surrogate_ridge}
+    Consider the Hidden Manifold Model with small noise variance $\sigma^2$, and assume that the manifold $\M$ has no boundary. Then the hyper-ridge set $R$ of the density $p$ satisfies
+    \[
+      \mathrm{Haus}(\M, R) = O\Big(\sigma^2 \log \frac{1}{\sigma}\Big),
+    \]
+    and $R$ is topologically homeomorphic to $\M$. Consequently, as the noise parameter $\sigma \to 0$ with $\M$ held fixed, the ridge $R$ converges to $\M$.
+    \end{theorem}
+
+Inside the tube of radius $O(\sigma)$ around the manifold, the score
+is overwhelmingly a normal restoring field. \citep{genovese2014nonparametric} shows that
 $
     \nabla \log p_\sigma(x)
     = -\tfrac{1}{\sigma^2}\bigl((x - \hat x) + O(K_\sigma^2)\bigr),
 $
-where $\hat x = \pi_M(x)$ is the projection onto $M$ and
+where $\hat x = \pi_\M(x)$ is the projection onto $\M$ and
 \[
     K_\sigma = \sqrt{\,2\sigma^2 \log\!\bigl(\sigma^{-(A+D)}\bigr)\,}
              = O\!\left(\sigma\sqrt{\log \tfrac{1}{\sigma}}\right).
 \]
 The normal component has size $O(\sigma^{-1})$ while the tangential component is
-$O(1)$: as $\sigma \to 0$ the score is, to leading order, a stiff spring pulling
-transversally inward. The only question is where the spring is anchored.
+$O(1)$: as $\sigma \to 0$ the score is, to leading order, a restoring force. And this restoring force is towards the ridge, not $\M$
 
-The answer is not $M$. Write the score as a first-order expansion about the
-manifold projection $m = \pi_M(x)$ and, alternatively, about the ridge
-projection $r = \pi_{R_\sigma}(x)$:
+Writing the score as a first-order expansion about the manifold projection $m = \pi_\M(x)$ and, about the ridge projection $r = \pi_{R_\sigma}(x)$:
 \begin{align}
     \nabla \log p_\sigma(x)
-        &= \nabla_M \log p_\sigma(m)
+        &= \nabla_\M \log p_\sigma(m)
            - \frac{1}{\sigma^2}(x - m)
            + O(K_\sigma^2)
            + o\!\left(\frac{\|x - m\|}{\sigma^2}\right),
@@ -838,17 +843,12 @@ projection $r = \pi_{R_\sigma}(x)$:
            + o\!\left(\frac{\|x - r\|}{\sigma^2}\right).
         \label{eq:expand-ridge}
 \end{align}
-The two expansions are identical in form but for one term. Expanding about the
-manifold leaves a residual $O(K_\sigma^2)$; expanding about the ridge does not.
-This residual is not a linear-in-displacement error that dies as $x \to m$ --
-those are collected in the $o(\|x-m\|/\sigma^2)$ term. It is a \emph{constant}
-normal offset of magnitude $K_\sigma^2/\sigma^2 = O(\log \tfrac{1}{\sigma})$,
-present even on $M$ itself. In other words, the normal restoring field does not
-vanish on the manifold; its zero has been pushed off $M$ by exactly $O(K_\sigma^2)$
-in the normal direction. That displaced zero is the ridge, and $O(K_\sigma^2)$ is
-precisely the Hausdorff bias $\mathrm{Haus}(M, R_\sigma) = O(\sigma^2 \log
-\tfrac{1}{\sigma})$ of Theorem~7. The manifold is where the data lived; the ridge
-is where the smoothed score believes it lives.
+Expanding about the manifold leaves a residual $O(K_\sigma^2)$, while expanding about the ridge does not.
+This residual is a constant
+normal bias of magnitude $K_\sigma^2/\sigma^2 = O(\log \tfrac{1}{\sigma})$,
+present even on the manifold $\M$ itself. The zero of the normal restoring field has been pushed off $\M$ by exactly $O(K_\sigma^2)$ in the normal direction. That displaced zero is the ridge, and $O(K_\sigma^2)$ is
+precisely the Hausdorff bias $\mathrm{Haus}(\M, R_\sigma) = O(\sigma^2 \log
+\tfrac{1}{\sigma})$ of \autoref{thm:surrogate_ridge}. 
 
 Projecting \eqref{eq:expand-ridge} onto the normal space $N_r$ at the ridge
 point makes this exact. The intrinsic gradient $\nabla_{R_\sigma}\log p_\sigma(r)$
@@ -859,70 +859,36 @@ lies in $T_r R_\sigma$ and is annihilated by $P_N(r)$, leaving
           + o\!\left(\frac{\|x - r\|}{\sigma^2}\right).
 \]
 The normal score is a pure linear restoring field toward the ridge, with slope
-$-\sigma^{-2}$ and \emph{no} curvature remainder. This is the precise content of
-the slogan ``the score points at the ridge'': the ridge is the exact zero set of
-the leading normal score, and every nearby point is pulled back toward it at rate
-$\sigma^{-2}$. It also closes the loop with the definition of the previous
-subsection. There the ridge was declared to be the locus where the normal
-component of the smoothed gradient vanishes; here we see that this locus is not
-an artefact of the definition but the genuine attractor of the score's dominant
-term, displaced from the true manifold by a curvature bias that the model has no
-way to remove.
+$-\sigma^{-2}$ and no curvature-induced remainder. 
+
+This also reinforces our definiton of the ridge as the locus where the normal
+component of the smoothed gradient vanishes. We see that this locus is the genuine attractor of the score's dominant term.
 
 
 \subsection{Failings of the Ridge}
 
-The objects the ridge is built from are as smooth as anything in this theory.
-For $t > 0$ the density $p_t$ is a Gaussian convolution, hence real-analytic;
+The objects the ridge is built from are smooth.
+For $t > 0$ the density $p_t$ is a Gaussian convolution, hence real-analytic. Thus
 the posterior mean $m_t$, the covariance field $A_t$, and the Hessian
 $\nabla^2 \log p_t = (A_t - I)/t$ are all analytic in $y$, and their eigenvalues
-$\lambda_1(y) \ge \cdots \ge \lambda_D(y)$ vary continuously everywhere. Nothing
-about the smoothed data is fragile. Yet the ridge set $R_t$ is not a continuous
-functional of the data, and it is worth being exact about where the
-discontinuity enters.
+$\lambda_1(y) \ge \cdots \ge \lambda_D(y)$ vary continuously everywhere (see \autoref{sec:pcf}). Yet the ridge set $R_t$ is not a continuous functional of the data.
 
-It enters through the one operation the definition adds on top of the smooth
-field: the selection of a $d$/$(D-d)$ eigenspace split. Eigenvalues of a
-symmetric matrix are continuous, but the assignment of a matrix to the span of
-its bottom $D-d$ eigenvectors is continuous only where those eigenvectors are
-separated from the rest of the spectrum by a gap. The controlling quantity is
-$\lambda_d(y) - \lambda_{d+1}(y)$, equivalently $a_d(y) - a_{d+1}(y)$. By the
-Davis--Kahan theorem the normal frame $P_N(y)$ is Lipschitz in $H(y)$ with
-constant proportional to the inverse gap, and this bound is vacuous where the
-gap closes. There the normal space $N(y)$ rotates discontinuously even though
-$H(y)$ moves analytically through the crossing.
 
-There are in fact two independent failure modes, corresponding to the two
-clauses of the definition. Where the gap $a_d - a_{d+1} \to 0$, the projector
-$P_N$ is ill-defined and the first ridge condition $\|P_N \nabla \log p_t\| = 0$
-loses meaning: the frame that decides which directions are ``normal'' is
-spinning. Separately, where the threshold $a_{d+1}(y) = 1$ is crossed, the
-second condition flips on or off, and $R_t$ gains or loses an entire component;
-its Hausdorff distance to its neighbours jumps and its homotopy type can change.
-This is not a defect that Genovese et al.\ overlooked. Their stability theorem
-bounds $\mathrm{Haus}(R, \hat R)$ by a quantity of order $\psi/\beta$, where
-$\beta$ is an assumed lower bound on precisely this eigengap; the hypothesis
-that the failure does not occur is built into the result. The instability is
-therefore a property of the map $(m_t, A_t) \mapsto R_t$, not of the
-distribution it is applied to. One takes a smooth field and passes it through a
-hard threshold, and thresholds are discontinuous.
+Two independent failure modes break the continuity of $R_t$:
+\begin{enumerate}
+    \item \textbf{Subspace Ambiguity:} Where $\lambda_d - \lambda_{d+1} \to 0$, the normal projector $P_N$ is ill-defined, rendering the condition $\|P_N \nabla \log p_t\| = 0$ meaningless as the normal frame loses its orientation.
+    \item \textbf{Topological Jumps:} Where $\lambda_{d+1}(y) = 0$, the concavity condition triggers, causing $R_t$ to abruptly gain or lose entire connected components.
+\end{enumerate}
+\citep{genovese2014nonparametric} accounts for this by establishing stability under an assumed lower bound $\beta$ on this eigengap. The instability belongs to the mapping $(m_t, A_t) \mapsto R_t$ itself, and this is expected since passing smooth analytic fields through rigid scalar thresholds inevitably creates discontinuities.
 
 A second, more basic problem is that the split requires the integer $d$ to be
 fixed in advance, and there is no consistent choice. The dimension is an input
 to the eigenspace selection, yet the natural scale-dependent notion of dimension,
 $d_{\mathrm{eff}}(t) = \mathbb{E}\,\mathrm{tr}\,A_t$, is neither an integer nor
 constant in $t$: it interpolates between the intrinsic dimension at small noise
-and zero at large noise, and it overshoots in between (Chapter~\ref{sec:pcf}). At
-the noise levels a sampler actually visits, the smoothing radius is comparable to
-the reach, the tube has swallowed the manifold, and there is no meaningful
-partition of directions into $d$ tangent and $D-d$ normal ones to be found. The
-ridge construction demands a decision --- how many normal directions? --- that
-the geometry at that scale simply does not answer. The posterior covariance
-field is under no such obligation: it reports the whole spectrum $a_1, \dots, a_D$
-and lets the number of near-tangent directions be whatever it is, at whatever
-scale, without a threshold and without a prior commitment to $d$.
+and zero at large noise, and it overshoots in between (Chapter~\ref{sec:pcf}).
 
-Consider a distribution on $\mathbb{S}^1\subset\mathbb{R}^2$ which is a mixture of 2 uniform densities on 2 disjoint semicircles. We let the mixture be again in a 1:3 ratio.
+\paragraph{Example of Discontinuity of the Ridge.} Consider a distribution on $\mathbb{S}^1\subset\mathbb{R}^2$ which is a 1:3 mixture of 2 uniform densities on 2 semicircles. We see that a small change in noise can drastically change the location and topology of the ridge. Additionally, knowing the ridge does not tell us how the data is distributed along it, and density might be negligable at points on the ridge.
 
 \begin{figure}[htbp]
     \centering
@@ -939,15 +905,11 @@ Consider a distribution on $\mathbb{S}^1\subset\mathbb{R}^2$ which is a mixture 
         \caption{Ridge of a circle with $\sigma = 0.58$}
         \label{fig:circle_ridge_2}
     \end{subfigure}
-    \caption{Comparison of circle ridges at different noise levels $\sigma$.}
+    \caption{Comparison of circle ridges at different noise levels $\sigma$, with inital density 1:3 mixture of 2 uniform densities on left and right semicircles, respectively.}
     \label{fig:circle_ridges}
 \end{figure}
 
-There are two behaviours which we see in the evolution of the ridge
-\paragraph{Impact of Density} In figure \ref{fig:circle_ridge_1} we see that the less dense left half of the circle is moving towards the centre at a much faster rate that the denser right half. This is expected since the higher density areas are more robust to smoothing, since there is more mass there. 
-
-\paragraph{Topology Change} Similar to the 1-d case, in figure \ref{fig:circle_ridge_2} we see that the ridge is no longer topologically a circle. So it is not just the geometry which is changing over time but also the topology. In the case where the density is uniform over the entire circle this occurs when the ridge shrinks to a point, but here it splits and then changes abruptly.
-
+While the ridge $R_\sigma$ has desireable qualities for small $\sigma$, and is the natural attractor of the score, for larger $\sigma$ it may be ill defined and can be discontinuous. Recalling that the ridge is a functional of the spectrum of the Jacobain of the score leads us to \autoref{sec:pcf}.
 
 \newpage
 
@@ -964,9 +926,11 @@ Here we introduce the ultimate object we analyse: posterior covariance fields.
     We call the weighted object $\mathfrak{F}_t := \Law\left(Y_t, m_t\left(Y_t\right), A_t\left(Y_t\right)\right)$ the \emph{posterior covariance field}. 
 \end{definition}
 
-Note: while we are also including the posterior mean $m_t(y)$ in our definition, we keep the name for simplicity. The posterior mean $m_t$ and by extension the score $s_t$ is the object whose regularity we want to understand, so its inclusion is natural.
+There are a few reasons why it makes sense to look at this object. First, it is not plagued by the issues we encountered in the analysis of ridges or level sets in \autoref{sec:ridges} and \autoref{sec:level_sets}. These objects suffered from being too geometric for our use case, where we care about noise scales much greater than 0. We need a more analytic quantity, and the posterior covariance field is defined for all noise scales $t>0$. In fact level sets and ridges can just be viewed as functionals of $\mathfrak{F}_t$. 
 
-There are a few reasons why it makes sense to look at this object. First, it is not plagued by the issues we encountered in the analysis of ridges or level sets in \autoref{sec:ridges} and \autoref{sec:level_sets}. These objects suffered from being too geometric for our use case, where we care about noise scales much greater than 0. We need a more analytic quantity, and the posterior covariance field is defined for all noise scales $t>0$. Second, the posterior covariance captures the local geometry of the score. The posterior covariance corresponds to the Jacobian of the score. This link is given in \autoref{sec:background}. Here we normalise the posterior covariance by $t$ to account for the scale of noise added. Third, here we deal with expectations, rather than $L^\infty$-type quantities like the reach $\tau_M$. If there exists a region of the density which is geometrically complex and as a consequence has poor regularity, but which carries almost no mass, we should not let it dramatically change our understanding of the behaviour of the score.
+Second, the posterior covariance captures the local geometry of the score. The posterior covariance corresponds to the Jacobian of the score. This link is given in \autoref{sec:background}. This not at all obvious fact is where we reap the rewards. Here we normalise the posterior covariance by $t$ to account for the scale of noise added. 
+
+Third, here we deal with expectations, rather than $L^\infty$-type quantities like the reach $\tau_M$. If there exists a region of the density which is geometrically complex and as a consequence has poor regularity, but which carries almost no mass, we should not let it dramatically change our understanding of the behaviour of the score.
 
 \subsection{Three functionals of the spectrum}
 
@@ -1000,13 +964,9 @@ $\tr\Cov(X\mid Y_t) = \E\bigl[|X-m_t(Y_t)|^2 \mid Y_t\bigr]$; take
 expectations and divide by $t$.
 \end{proof}
 
-Identity \eqref{eq:deff-mmse} is exact, not asymptotic, and has two
-consequences of practical importance. First, $\deff$ is dimensionless: it
-is residual posterior uncertainty measured in units of injected noise
-variance. Second, $\mmse(t)$ is precisely the population value of the
+Note in identity \eqref{eq:deff-mmse} $\mmse(t)$ is precisely the population value of the
 $\varepsilon$-prediction (or $x_0$-prediction) denoising loss at noise
-level $t$, so $\deff$ requires no computation beyond the training
-objective already being evaluated.
+level $t$, so it requires no computation beyond the training objective already being evaluated.
 
 \paragraph{Link to dimension.}
 An orthogonal projector of rank $k$ has spectrum
@@ -1018,13 +978,13 @@ directions, so $\mmse \approx d\times t$. Each eigenvalue may be read as a
 fractional dimension: $a_i = 0.4$ contributes $0.4$ effective directions.
 
 \paragraph{Failure mode.}
-$\deff$ is a first moment and therefore cannot distinguish
+$\deff$ is a first moment and therefore cannot distinguish \\
 $\mathrm{diag}(1,1,1,0,0,0)$ from $\mathrm{diag}(\tfrac12,\tfrac12,\tfrac12,\tfrac12,\tfrac12,\tfrac12)$:
 both have trace $3$. It also over-counts when $a_i > 1$, in which case
 the ``fractional dimension'' reading breaks down entirely. The next two
-functionals repair exactly these two deficiencies.
+functionals repair these two deficiencies.
 
-\subsubsection{Distance to projector structure}
+\subsubsection{Distance to projector}
 
 \begin{definition}
 \begin{equation}
@@ -1054,6 +1014,7 @@ Then
 \dproj(t) = \E\bigl[\dist_F^2\bigl(A_t(Y_t),\Pset\bigr)\bigr].
 \label{eq:dproj-frob}
 \end{equation}
+
 \end{proposition}
 
 \begin{proof}
@@ -1064,19 +1025,8 @@ Hoffman--Wielandt inequality). It then remains to round each $a_i$ to the
 nearer of $0$ or $1$.
 \end{proof}
 
-Thus $\dproj$ answers: \emph{how far, on average, is the soft posterior
-geometry from being a genuine tangent-space projector?} It vanishes
+Thus $\dproj$ measures how far, on average, is the soft posterior geometry from being a genuine tangent-space projector. It vanishes
 exactly when $A_t(Y_t)$ is a projector almost surely.
-
-\begin{remark}[Interpretation as a resolution probe]
-For data concentrated near a manifold but with normal thickness $\delta$,
-the normal eigenvalues behave as $a_n \approx \delta^2/(\delta^2+t)$,
-which passes through $\tfrac12$ at $t \approx \delta^2$ and contributes
-$\tfrac14$ to $\dproj$ there. Consequently $\dproj(t)$ peaks at the scale
-at which the manifold hypothesis stops being exactly true, and its peak
-location is a readout of that scale. $\dproj$ is best regarded as a
-scale-resolved test of manifold-likeness rather than a single verdict.
-\end{remark}
 
 \subsubsection{Ambiguity}
 
@@ -1088,7 +1038,7 @@ With $(x)_+ := \max\{x,0\}$,
 \end{equation}
 \end{definition}
 
-The motivation is dynamical rather than geometric. $a_i > 1$ occurs if and only if the reverse probability-flow ODE is locally expansive along $v_i$. The threshold is the separatrix at which posterior variance exceeds the injected noise variance:
+The motivation is dynamical rather than geometric. Let $(a_i, v_i)$ be an eigen-pair of $A_t$. $a_i > 1$ occurs if and only if the reverse probability-flow ODE is locally expansive along $v_i$. The threshold where posterior variance exceeds the injected noise variance:
 \begin{equation}
 a_i = \frac{\text{posterior variance along } v_i}{\text{noise variance } t}
 \quad\begin{cases}
@@ -1113,7 +1063,7 @@ and the between-mode term can exceed $tI$ along $\mu_1-\mu_2$, giving
 $a_i>1$. So $a_i > 1$ signals that the noisy observation fails to
 identify a single locally stable latent configuration.
 
-\begin{remark}[Scope of the interpretation]
+\begin{remark}[Scope of interpretation]
 Strictly, $a_i>1$ is a diagnostic that posterior variance exceeds the
 noise scale. Multimodality is the typical, but not the only, mechanism:
 heavy-tailed unimodal $p_0$ (e.g.\ Laplace, Student-$t$) also produces
@@ -1130,9 +1080,30 @@ failure is driven by trajectories that enter the expansive region, not by
 its measure.
 \end{remark}
 
-\subsection{MMSE-driven discretization}
+\subsection{Examples}
 
-We started by looking at \citep{potaptchik2024linear}.
+\subsection{Evolution law of MMSE}
+
+
+By \autoref{thm:mmse}, differentiating $\operatorname{MMSE}(t)$ under the Gaussian channel model $Y_t = X + \sqrt{t}Z$ gives:
+\begin{equation}
+\operatorname{MMSE}'(t) = \frac{1}{t^2} \mathbb{E}\left[\operatorname{tr}\left(\operatorname{Cov}\left(X \mid Y_t\right)^2\right)\right]
+\end{equation}
+
+By definition, $A_t(y) = \frac{1}{t} \operatorname{Cov}\left(X \mid Y_t=y\right)$. Squaring this relation and taking the trace yields:
+\begin{equation}
+\operatorname{tr}\left(A_t(Y_t)^2\right) = \frac{1}{t^2} \operatorname{tr}\left(\operatorname{Cov}\left(X \mid Y_t\right)^2\right) = \|A_t(Y_t)\|_F^2
+\end{equation}
+Substituting this directly into the expression for $\operatorname{MMSE}'(t)$:
+\begin{equation}
+    \label{eq:mmse-prime-A}
+\operatorname{MMSE}'(t) = \mathbb{E}\left[\operatorname{tr}\left(A_t(Y_t)^2\right)\right] = \mathbb{E}\|A_t(Y_t)\|_F^2
+\end{equation}
+
+
+
+
+\subsection{MMSE-driven discretisation}
 
 
 We consider the additive Gaussian perturbation
@@ -1171,14 +1142,14 @@ and hence
     \label{eq:mmse-deff}
 \end{equation}
 
-\paragraph{Discretization error.}
+\paragraph{Discretisation error.}
 For additive Gaussian noise, Tweedie's formula gives
 \begin{equation}
     s_t(x)
     =
     \frac{m_t(x)-x}{t}.
 \end{equation}
-The same martingale argument used to control the score variation in the discretized reverse process then yields, for two noise levels
+The same martingale argument used in \citep{potaptchik2024linear} to control the score variation in the discretized reverse process then yields, for two noise levels
 $t<t'$,
 \begin{equation}
 \begin{aligned}
@@ -1200,7 +1171,7 @@ $t<t'$,
 \end{aligned}
 \label{eq:score-mmse}
 \end{equation}
-with the sign understood according to the direction in which the diffusion trajectory is traversed. Thus, for a sufficiently fine discretization with step size
+with the sign understood according to the direction in which the diffusion trajectory is traversed. Thus, for a sufficiently fine discretisation with step size
 \begin{equation}
     \Delta t_k := t_{k+1}-t_k,
 \end{equation}
@@ -1213,21 +1184,22 @@ the contribution of the $k$-th interval is, up to higher-order terms,
     (\Delta t_k)^2.
     \label{eq:local-error}
 \end{equation}
-Consequently, the total discretization error is approximated by
+Consequently, the total discretisation error is approximated by
 \begin{equation}
     \mathcal{E}_{\mathrm{disc}}
     \;\asymp\;
     \sum_{k=0}^{K-1}
-    a(t_k)(\Delta t_k)^2,
+    \alpha(t_k)(\Delta t_k)^2,
     \qquad
-    a(t)
+    \alpha(t)
     :=
     \frac{|\operatorname{MMSE}'(t)|}{t^2}.
     \label{eq:discrete-objective}
 \end{equation}
 
+
 \paragraph{Optimal allocation of time steps.}
-We now choose the discretization points to minimize
+We now choose the discretisation points to minimize
 \eqref{eq:discrete-objective} subject to a fixed number $K$ of steps.
 Introduce the local step density
 \begin{equation}
@@ -1244,60 +1216,48 @@ while
 \begin{aligned}
     \mathcal{E}_{\mathrm{disc}}
     &\approx
-    \int a(t)\Delta t(t)\,dt
+    \int \alpha(t)\Delta t(t)\,dt
     \\
     &=
-    \int \frac{a(t)}{n(t)}\,dt.
+    \int \frac{\alpha(t)}{n(t)}\,dt.
 \end{aligned}
 \end{equation}
 Minimizing this functional subject to
 $\int n(t)\,dt=K$ gives
 \begin{equation}
-    n(t)\propto \sqrt{a(t)},
+    n(t)\propto \sqrt{\alpha(t)},
 \end{equation}
 and therefore
 \begin{equation}
     \Delta t(t)
     \propto
-    \frac{1}{\sqrt{a(t)}}
+    \frac{1}{\sqrt{\alpha(t)}}
     =
     \frac{t}{\sqrt{|\operatorname{MMSE}'(t)|}}.
     \label{eq:mmse-schedule}
 \end{equation}
 
-Finally, using \eqref{eq:mmse-deff},
+Finally, using \autoref{eq:mmse-prime-A},
 \begin{equation}
     \operatorname{MMSE}'(t)
-    =
-    \frac{d}{dt}\left[t\,d_{\mathrm{eff}}(t)\right]
-    =
-    d_{\mathrm{eff}}(t)
-    +
-    t\,d_{\mathrm{eff}}'(t),
+    = \mathbb{E}\left\|A_t\left(Y_t\right)\right\|_F^2,
 \end{equation}
-so the resulting MMSE-adaptive discretization is
+so the resulting MMSE-adaptive discretisation is
 \begin{equation}
-    \boxed{
     \Delta t(t)
     \propto
     \frac{t}
-    {\sqrt{
-        \left|
-        d_{\mathrm{eff}}(t)
-        +
-        t\,d_{\mathrm{eff}}'(t)
-        \right|
+    {\sqrt{\mathbb{E}\left\|A_t\left(Y_t\right)\right\|_F^2
     }}
-    }.
-    \label{eq:natural-discretization}
+    .
+    \label{eq:natural-discretisation}
 \end{equation}
 
-This prescription allocates more discretization points to regions in which the posterior uncertainty, measured by the MMSE, changes rapidly, while accounting for the $t^{-2}$ amplification of score errors at small noise scales.
+\begin{remark}
+    $\mathbb{E}\left\|A_t\left(Y_t\right)\right\|_F^2 = \sum_i \E\left[a_i(t)^2 \right]$, so this discretisation assigns a high density of small timesteps whenever we have expansive eigenvalues $a_i>1$, in expectation.
+\end{remark}
 
-
-\subsection{Examples}
-
-\subsection{Summary}
+\subsection{Interpretation}
 
 
 
@@ -1307,6 +1267,60 @@ This prescription allocates more discretization points to regions in which the p
 
 \bibliographystyle{plainnat}
 \bibliography{references}
+
+
+\newcommand{\MMSE}{\operatorname{MMSE}}
+
+
+\newpage 
+\section*{Appendix: Proof of $\MMSE'(t) = \frac{1}{t^2} \E\left[\tr\left(\operatorname{Cov}\left(X \mid Y_t\right)^2\right)\right]$}
+
+\begin{theorem}
+    \label{thm:mmse}
+    Let $X \in \mathbb{R}^D$ be a random vector with probability density $p(x)$ and finite second moment, and let $Z \sim \mathcal{N}(0, I_D)$ be independent of $X$. Define the observation process $Y_t = X + \sqrt{t}Z$ for $t > 0$, and the Minimum Mean Squared Error function:
+    $$ \operatorname{MMSE}(t) = \mathbb{E}\left[ \|X - \mathbb{E}[X \mid Y_t]\|^2 \right] $$
+    Then $\operatorname{MMSE}(t)$ is differentiable with respect to $t > 0$, and its derivative satisfies:
+    $$ \operatorname{MMSE}'(t) = \frac{1}{t^2} \mathbb{E}\left[ \operatorname{tr}\left( \operatorname{Cov}(X \mid Y_t)^2 \right) \right] $$
+    \end{theorem}
+    
+    \begin{proof}
+    The marginal density of $Y_t$, $p_t(y) = \int p(x) (2\pi t)^{-D/2} \exp\left(-\frac{\|y-x\|^2}{2t}\right) dx$, satisfies the heat equation $\frac{\partial p_t(y)}{\partial t} = \frac{1}{2} \Delta_y p_t(y)$. Define the score function $s_t(y) = \nabla_y \log p_t(y)$ and the Fisher Information trace $J(t) = \mathbb{E}\left[\|s_t(Y_t)\|^2\right]$.
+    
+    \paragraph{1. Score representation of conditional statistics.}
+    Spatial differentiation of $p_t(y)$ yields Tweedie's formula:
+    $$ s_t(y) = \frac{\nabla_y p_t(y)}{p_t(y)} = -\frac{y - \mathbb{E}[X \mid Y_t = y]}{t} \implies X - \mathbb{E}[X \mid Y_t] = -t s_t(Y_t) $$
+    Taking the spatial Jacobian of $\mathbb{E}[X \mid Y_t = y] = y + t s_t(y)$:
+    $$ \nabla_y \mathbb{E}[X \mid Y_t = y] = \frac{1}{t} \operatorname{Cov}(X \mid Y_t = y) = I_D + t \nabla_y s_t(y) $$
+    Rearranging yields the score Hessian:
+    $$ \nabla_y s_t(y) = \frac{\operatorname{Cov}(X \mid Y_t = y) - t I_D}{t^2} $$
+    
+    \paragraph{2. Relation between MMSE and Fisher Information.}
+    By Tweedie's formula:
+    $$ \operatorname{MMSE}(t) = \mathbb{E}\left[ \|-t s_t(Y_t)\|^2 \right] = t^2 J(t) $$
+    Applying integration by parts ($\mathbb{E}[\|s_t(Y_t)\|^2] = -\mathbb{E}[\operatorname{tr}(\nabla_y s_t(Y_t))] = -J(t)$) to the score Hessian:
+    $$ J(t) = -\mathbb{E}\left[ \operatorname{tr}\left( \frac{\operatorname{Cov}(X \mid Y_t) - t I_D}{t^2} \right) \right] = \frac{D}{t} - \frac{\operatorname{MMSE}(t)}{t^2} $$
+    $$ \implies \operatorname{MMSE}(t) = t D - t^2 J(t) $$
+    
+    \paragraph{3. Time evolution of Fisher Information.}
+    Differentiating $J(t) = \int p_t(y) \|\nabla \log p_t(y)\|^2 dy$ with respect to $t$ under heat flow $\frac{\partial p_t}{\partial t} = \frac{1}{2} \Delta p_t$ yields de Bruijn's score identity:
+    $$ J'(t) = -\mathbb{E}\left[ \|\nabla_y s_t(Y_t)\|_F^2 \right] = -\mathbb{E}\left[ \operatorname{tr}\left( (\nabla_y s_t(Y_t))^2 \right) \right] $$
+    Substituting the expression for $\nabla_y s_t(Y_t)$:
+    \begin{align*}
+    J'(t) &= -\mathbb{E}\left[ \operatorname{tr}\left( \left(\frac{\operatorname{Cov}(X \mid Y_t) - t I_D}{t^2}\right)^2 \right) \right] \\
+    &= -\frac{1}{t^4} \mathbb{E}\left[ \operatorname{tr}\left( \operatorname{Cov}(X \mid Y_t)^2 - 2t \operatorname{Cov}(X \mid Y_t) + t^2 I_D \right) \right] \\
+    &= -\frac{1}{t^4} \mathbb{E}\left[ \operatorname{tr}\left( \operatorname{Cov}(X \mid Y_t)^2 \right) \right] + \frac{2}{t^3} \operatorname{MMSE}(t) - \frac{D}{t^2}
+    \end{align*}
+    
+    \paragraph{4. Total differentiation of MMSE(t).}
+    Differentiating $\operatorname{MMSE}(t) = t D - t^2 J(t)$ via the product rule:
+    $$ \operatorname{MMSE}'(t) = D - 2t J(t) - t^2 J'(t) $$
+    Substituting $2t J(t) = 2D - \frac{2\operatorname{MMSE}(t)}{t}$ and $-t^2 J'(t)$:
+    \begin{align*}
+    \operatorname{MMSE}'(t) &= D - \left( 2D - \frac{2\operatorname{MMSE}(t)}{t} \right) + \left( \frac{1}{t^2} \mathbb{E}\left[\operatorname{tr}\left(\operatorname{Cov}(X \mid Y_t)^2\right)\right] - \frac{2\operatorname{MMSE}(t)}{t} + D \right) \\
+    &= (D - 2D + D) + \left( \frac{2\operatorname{MMSE}(t)}{t} - \frac{2\operatorname{MMSE}(t)}{t} \right) + \frac{1}{t^2} \mathbb{E}\left[ \operatorname{tr}\left( \operatorname{Cov}(X \mid Y_t)^2 \right) \right] \\
+    &= \frac{1}{t^2} \mathbb{E}\left[ \operatorname{tr}\left( \operatorname{Cov}(X \mid Y_t)^2 \right) \right]
+    \end{align*}
+    \end{proof}
 
 
 \end{document}
