@@ -5,6 +5,7 @@
 \usepackage{microtype}
 \usepackage[authoryear,round]{natbib}
 \usepackage[colorlinks=true,linkcolor=blue,citecolor=blue]{hyperref}
+\usepackage{subcaption}
 
 % --- Custom Math Operators & Commands ---
 \DeclareMathOperator{\Cov}{Cov}
@@ -154,6 +155,79 @@ We find that the spectrum of the posterior covariance captures geometric variati
 \newpage
 \section{Background}
 \label{sec:background}
+Here we go over the necessary background needed for the project.
+
+\subsection{The Manifold Hypothesis}
+The manifold hypothesis is an explaination of the effectiveness of machine learning for unstructured high-dimensional data. It states that a distribution $X \sim p_\text{data}, X \in \R^D$ lies on (or is concentrated around) a submanifold $\M$ of lower dimension $d \ll D$. This effectively makes the number of degrees of freedom $d$, allowing models to learn these lower dimensional spaces in settings where we may have $n < D$ data points.
+
+The main argument for the manifold hypothesis is the curse of dimensionality, whereby there are too many dimensions making data very sparse and hard for models to learn from. Many counterintuitve behaviours are exhibited in high dimensional space, for example standard Gaussian data from $\mathcal{N}(0;\Id_D)$ concentrating around the shell of radius $\sqrt{D}$.
+
+The justification of the manifold hypothesis is that it is a good canidate model for naturaly arising data, which tends to be locally continuous, and have fewer degrees of freedom. The space of natural images is far smaller than the space of all possible images, for example.
+
+There are variations of the manifold hypothesis, which make it less restrictive an assumption. These include:
+\begin{itemize}
+    \item The union of manifolds hypothesis \cite{brown2022union}, \cite{brown2022verifying}, which argue that standard manifold hypothesis is incomplete, and a union of manifolds of potentially different dimensions is a more realistic assumption
+    \item The stratified space hypothesis \cite{aamari2024theory}, which extends this idea but allow for intersections between manifolds of different dimension
+\end{itemize}
+
+\subsection{Flow Matching as a Score Based Generative Model}
+
+Score Based Generative models (SGMs) \cite{ho2020denoising}, \cite{song2019generative}, \cite{song2020score} introduced the notion of generative modelling by estimating gradients of the density. In fact, in the abstract of \cite{song2019generative} the authors state ``Because gradients can be ill-defined and hard to estimate when the data resides on
+\textbf{low-dimensional manifolds}, we perturb the data with different levels of Gaussian noise, and jointly estimate the corresponding scores, i.e., the vector fields of gradients of the perturbed data distribution for all noise levels.''
+
+Since the introduction of SGMs, they have been refined into their canonical form: flow matching models \cite{lipman2022flow}, \cite{albergo2025stochastic}. Here we give a brief overview.
+
+\subsubsection{Gaussian Flows and Score-Based Flow Matching}
+
+In generative modeling via flow matching, we aim to transform a base noise distribution $p_1 = \mathcal{N}(0, I_d)$ into a complex target data distribution $p_0$. Let $X_0 \sim p_0$ and $X_1 = \varepsilon \sim \mathcal{N}(0, I_d)$. The linear conditional flow $X_t = \varphi_t(X_0, \varepsilon)$ interpolates between data and noise according to:
+
+\[
+X_t = c_t X_0 + \sigma_t \varepsilon
+\]
+
+where $c_t, \sigma_t$ are differentiable boundary-satisfying schedules with $c_0 = 1, \sigma_0 = 0$ and $c_1 = 0, \sigma_1 = 1$. Differentiating with respect to time yields the conditional vector field:
+
+\[
+\dot{X}_t = \dot{c}_t X_0 + \dot{\sigma}_t \varepsilon
+\]
+
+\paragraph{Vector Field Formulation}
+
+The marginal probability density $p_t$ of $X_t$ evolves according to the continuity equation $\partial_t p_t = -\nabla \cdot (v_t p_t)$. The unconditional ODE trajectory $\dot{x}_t = v_t(x_t)$ generates these exact same marginals $p_t$ when initialized at $x_0 \sim p_0$. The marginal velocity field $v_t(x)$ is given by the conditional expectation:
+
+\[
+v_t(x) = \mathbb{E}\left[\dot{X}_t \mid X_t = x\right] = \dot{c}_t \mathbb{E}\left[X_0 \mid X_t = x\right] + \dot{\sigma}_t \mathbb{E}\left[\varepsilon \mid X_t = x\right]
+\]
+
+\paragraph{Derivation via Tweedie's Formula}
+
+Because $p_t$ is the distribution of $c_t X_0$ corrupted by Gaussian noise $\sigma_t \varepsilon \sim \mathcal{N}(0, \sigma_t^2 I_d)$, Tweedie's denoising identity provides closed-form expressions for the conditional expectations in terms of the score function $\nabla \ln p_t(x)$:
+
+\[
+\mathbb{E}\left[\varepsilon \mid X_t = x\right] = -\sigma_t \nabla \ln p_t(x)
+\]
+
+\[
+\mathbb{E}\left[X_0 \mid X_t = x\right] = \frac{x + \sigma_t^2 \nabla \ln p_t(x)}{c_t}
+\]
+
+Substituting these expectations into the expression for $v_t(x)$ yields:
+
+\begin{align*}
+v_t(x) &= \dot{c}_t \left( \frac{x + \sigma_t^2 \nabla \ln p_t(x)}{c_t} \right) + \dot{\sigma}_t \left( -\sigma_t \nabla \ln p_t(x) \right) \\
+&= \frac{\dot{c}_t}{c_t} x + \left( \frac{\dot{c}_t \sigma_t^2}{c_t} - \dot{\sigma}_t \sigma_t \right) \nabla \ln p_t(x) \\
+&= \frac{\dot{c}_t}{c_t} x + \sigma_t^2 \left[ \frac{\dot{c}_t}{c_t} - \frac{\dot{\sigma}_t}{\sigma_t} \right] \nabla \ln p_t(x)
+\end{align*}
+
+\paragraph{Implications and Equivalence}
+
+The velocity field $v_t(x)$ is completely determined by the schedules $c_t, \sigma_t$ and the score function $\nabla \ln p_t(x)$. The parameterized target models are related by linear transformations:
+\[
+\nabla \ln p_t(x) \quad \iff \quad \mathbb{E}\left[\varepsilon \mid X_t = x\right] \quad \iff \quad \mathbb{E}\left[X_0 \mid X_t = x\right] \quad \iff \quad v_t(x)
+\]
+
+Learning any one of these targets allows immediate recovery of the others. Sampling via the flow ODE $\dot{x}_t = v_t(x_t)$ using a score model $\nabla \ln p_t$ is mathematically equivalent to running the probability flow (DDIM \cite{song2020denoising}) ODE in diffusion models.
+
 
 \newpage
 \section{Anisotropic Stability Bound}
@@ -676,23 +750,231 @@ This relates to the conventional wisdom where we need more refined time steps as
 
 \section{Ridges}
 \label{sec:ridges}
+\subsection{Motivation}
 
 An at first unintuitive aspect of the manifold hypothesis is that the lower dimensional space around which data concentrate is not necessarily, or in fact usually, the initial manifold. This is because as the amount of noise that we add increases the effective radius with which we convolve grows and includes more of our initial manifold. We see a noise density concentrating around a different space. This begs the question ``what is this new space and how does it behave and evolve?''
 
-This becomes immediately obvious when considering smoothing a pair of Gaussians: the modes of the sum is not the union of the modes.
+This becomes immediately obvious when considering smoothing a pair of distinct Bernouli random variables: the modes of the sum is not the union of the modes.
 
- below as an example of what smoothing a density on a sine wave can do.
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/ridge_gaussian.png}
+        \caption{Gaussian smoothing moves modes in 1-D}
+        \label{fig:ridge_gaussian}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/ridge_wiggly.png}
+        \caption{Gaussian smoothing moves the ridge in 2-D}
+        \label{fig:ridge_wiggly}
+    \end{subfigure}
+    \caption{Comparison of ridge structures.}
+    \label{fig:ridge_comparison}
+\end{figure}
 
-  With this intuition it's fairly easy to rediscover the definition of a rich. It's where the normal component of our changing density is zero. But a priori we do not know which components are normal.
-
-  %insert definition of ridge
 
 
+With this intuition it becomes fairly easy to rediscover the definition of a ridge. It is where the normal component of our changing density is zero. But a priori we do not know which components are normal. 
+
+The resolution is to let the density define its own normal directions. At a
+point on a $d$-dimensional ridge the density behaves like a mountain ridge: it
+is at a local maximum in the $D-d$ directions transverse to the ridge, while
+along the remaining $d$ directions it varies slowly. Transverse to the ridge the
+density curves sharply downward; along it, the curvature is mild. This is a
+statement about the Hessian. Let $g(x) = \nabla p(x)$ and $H(x) = \nabla^2 p(x)$,
+and order the eigenvalues of $H(x)$ as
+\[
+    \lambda_1(x) \ge \cdots \ge \lambda_d(x) \ge \lambda_{d+1}(x) \ge \cdots \ge \lambda_D(x),
+\]
+with orthonormal eigenvectors $u_1(x), \dots, u_D(x)$. The directions of
+sharpest downward curvature are those with the most negative eigenvalues, so we
+\emph{define} the normal space at $x$ to be the span of the bottom $D-d$
+eigenvectors, and the tangent space to be the span of the top $d$. Writing
+$V(x) = [u_{d+1}(x) \mid \cdots \mid u_D(x)]$ for the normal frame,
+$L(x) = V(x)V(x)^\top$ is the projector onto the normal space. This is the point
+of the construction: which directions are normal is not supplied from outside,
+it is read off from the second-order structure of the smoothed density itself.
+
+A ridge point is then one from which the density cannot be increased by moving
+normally. Equivalently, the normal component of the gradient vanishes. Define
+the projected gradient
+\[
+    G(x) = L(x)\,g(x),
+\]
+and the ridge as the set where it is zero and the transverse curvature is
+genuinely downward:
+\[
+    R = \bigl\{ x : \|G(x)\| = 0,\ \lambda_{d+1}(x) < 0 \bigr\}.
+\]
+The second condition, $\lambda_{d+1}(x) < 0$, requires the largest of the normal
+eigenvalues to still be negative, so that every normal direction is a direction
+of local descent and the point is a maximum transverse to the ridge rather than
+a saddle. The case $d = 0$ recovers ordinary modes: $L(x) = I$, the condition
+$\|G(x)\| = 0$ becomes $\nabla p(x) = 0$, and $\lambda_1(x) < 0$ asks for a local
+maximum. A $d$-ridge relaxes this by demanding a critical point only in the
+$D-d$ normal directions, and negative curvature only in the corresponding block.
+
+\subsection{The score concentrates on the ridge}
+
+We first record a convenient fact: the ridge of $\log p_\sigma$ and the ridge of
+$p_\sigma$ are the same set. Since $\log$ is strictly increasing, $\nabla \log
+p_\sigma = p_\sigma^{-1}\nabla p_\sigma$ vanishes exactly where $\nabla p_\sigma$
+does, and the two Hessians differ by the rank-one term $p_\sigma^{-1}\nabla
+p_\sigma \nabla p_\sigma^\top$, which vanishes wherever the gradient does. On the
+ridge, then, gradient, projected gradient and normal eigenframe all agree
+between $p_\sigma$ and $\log p_\sigma$. We work with $\log p_\sigma$ from now on,
+for two reasons: it is the object the generative model actually learns, its
+gradient being the score; and, as Genovese et al. note, the surrogate property
+holds in an $O(1)$ neighbourhood of $M$ for the log-density but only in an
+$O(\sigma)$ neighbourhood for the density itself.
+
+Inside the tube of radius $O(\sigma)$ around the (rescaled) manifold, the score
+is overwhelmingly a normal restoring field. Genovese et al.\ show that
+$
+    \nabla \log p_\sigma(x)
+    = -\tfrac{1}{\sigma^2}\bigl((x - \hat x) + O(K_\sigma^2)\bigr),
+$
+where $\hat x = \pi_M(x)$ is the projection onto $M$ and
+\[
+    K_\sigma = \sqrt{\,2\sigma^2 \log\!\bigl(\sigma^{-(A+D)}\bigr)\,}
+             = O\!\left(\sigma\sqrt{\log \tfrac{1}{\sigma}}\right).
+\]
+The normal component has size $O(\sigma^{-1})$ while the tangential component is
+$O(1)$: as $\sigma \to 0$ the score is, to leading order, a stiff spring pulling
+transversally inward. The only question is where the spring is anchored.
+
+The answer is not $M$. Write the score as a first-order expansion about the
+manifold projection $m = \pi_M(x)$ and, alternatively, about the ridge
+projection $r = \pi_{R_\sigma}(x)$:
+\begin{align}
+    \nabla \log p_\sigma(x)
+        &= \nabla_M \log p_\sigma(m)
+           - \frac{1}{\sigma^2}(x - m)
+           + O(K_\sigma^2)
+           + o\!\left(\frac{\|x - m\|}{\sigma^2}\right),
+        \label{eq:expand-manifold}\\[2pt]
+    \nabla \log p_\sigma(x)
+        &= \nabla_{R_\sigma} \log p_\sigma(r)
+           - \frac{1}{\sigma^2}(x - r)
+           + o\!\left(\frac{\|x - r\|}{\sigma^2}\right).
+        \label{eq:expand-ridge}
+\end{align}
+The two expansions are identical in form but for one term. Expanding about the
+manifold leaves a residual $O(K_\sigma^2)$; expanding about the ridge does not.
+This residual is not a linear-in-displacement error that dies as $x \to m$ --
+those are collected in the $o(\|x-m\|/\sigma^2)$ term. It is a \emph{constant}
+normal offset of magnitude $K_\sigma^2/\sigma^2 = O(\log \tfrac{1}{\sigma})$,
+present even on $M$ itself. In other words, the normal restoring field does not
+vanish on the manifold; its zero has been pushed off $M$ by exactly $O(K_\sigma^2)$
+in the normal direction. That displaced zero is the ridge, and $O(K_\sigma^2)$ is
+precisely the Hausdorff bias $\mathrm{Haus}(M, R_\sigma) = O(\sigma^2 \log
+\tfrac{1}{\sigma})$ of Theorem~7. The manifold is where the data lived; the ridge
+is where the smoothed score believes it lives.
+
+Projecting \eqref{eq:expand-ridge} onto the normal space $N_r$ at the ridge
+point makes this exact. The intrinsic gradient $\nabla_{R_\sigma}\log p_\sigma(r)$
+lies in $T_r R_\sigma$ and is annihilated by $P_N(r)$, leaving
+\[
+    P_N(r)\,\nabla \log p_\sigma(x)
+        = -\frac{1}{\sigma^2}(x - r)
+          + o\!\left(\frac{\|x - r\|}{\sigma^2}\right).
+\]
+The normal score is a pure linear restoring field toward the ridge, with slope
+$-\sigma^{-2}$ and \emph{no} curvature remainder. This is the precise content of
+the slogan ``the score points at the ridge'': the ridge is the exact zero set of
+the leading normal score, and every nearby point is pulled back toward it at rate
+$\sigma^{-2}$. It also closes the loop with the definition of the previous
+subsection. There the ridge was declared to be the locus where the normal
+component of the smoothed gradient vanishes; here we see that this locus is not
+an artefact of the definition but the genuine attractor of the score's dominant
+term, displaced from the true manifold by a curvature bias that the model has no
+way to remove.
 
 
+\subsection{Failings of the Ridge}
+
+The objects the ridge is built from are as smooth as anything in this theory.
+For $t > 0$ the density $p_t$ is a Gaussian convolution, hence real-analytic;
+the posterior mean $m_t$, the covariance field $A_t$, and the Hessian
+$\nabla^2 \log p_t = (A_t - I)/t$ are all analytic in $y$, and their eigenvalues
+$\lambda_1(y) \ge \cdots \ge \lambda_D(y)$ vary continuously everywhere. Nothing
+about the smoothed data is fragile. Yet the ridge set $R_t$ is not a continuous
+functional of the data, and it is worth being exact about where the
+discontinuity enters.
+
+It enters through the one operation the definition adds on top of the smooth
+field: the selection of a $d$/$(D-d)$ eigenspace split. Eigenvalues of a
+symmetric matrix are continuous, but the assignment of a matrix to the span of
+its bottom $D-d$ eigenvectors is continuous only where those eigenvectors are
+separated from the rest of the spectrum by a gap. The controlling quantity is
+$\lambda_d(y) - \lambda_{d+1}(y)$, equivalently $a_d(y) - a_{d+1}(y)$. By the
+Davis--Kahan theorem the normal frame $P_N(y)$ is Lipschitz in $H(y)$ with
+constant proportional to the inverse gap, and this bound is vacuous where the
+gap closes. There the normal space $N(y)$ rotates discontinuously even though
+$H(y)$ moves analytically through the crossing.
+
+There are in fact two independent failure modes, corresponding to the two
+clauses of the definition. Where the gap $a_d - a_{d+1} \to 0$, the projector
+$P_N$ is ill-defined and the first ridge condition $\|P_N \nabla \log p_t\| = 0$
+loses meaning: the frame that decides which directions are ``normal'' is
+spinning. Separately, where the threshold $a_{d+1}(y) = 1$ is crossed, the
+second condition flips on or off, and $R_t$ gains or loses an entire component;
+its Hausdorff distance to its neighbours jumps and its homotopy type can change.
+This is not a defect that Genovese et al.\ overlooked. Their stability theorem
+bounds $\mathrm{Haus}(R, \hat R)$ by a quantity of order $\psi/\beta$, where
+$\beta$ is an assumed lower bound on precisely this eigengap; the hypothesis
+that the failure does not occur is built into the result. The instability is
+therefore a property of the map $(m_t, A_t) \mapsto R_t$, not of the
+distribution it is applied to. One takes a smooth field and passes it through a
+hard threshold, and thresholds are discontinuous.
+
+A second, more basic problem is that the split requires the integer $d$ to be
+fixed in advance, and there is no consistent choice. The dimension is an input
+to the eigenspace selection, yet the natural scale-dependent notion of dimension,
+$d_{\mathrm{eff}}(t) = \mathbb{E}\,\mathrm{tr}\,A_t$, is neither an integer nor
+constant in $t$: it interpolates between the intrinsic dimension at small noise
+and zero at large noise, and it overshoots in between (Chapter~\ref{sec:pcf}). At
+the noise levels a sampler actually visits, the smoothing radius is comparable to
+the reach, the tube has swallowed the manifold, and there is no meaningful
+partition of directions into $d$ tangent and $D-d$ normal ones to be found. The
+ridge construction demands a decision --- how many normal directions? --- that
+the geometry at that scale simply does not answer. The posterior covariance
+field is under no such obligation: it reports the whole spectrum $a_1, \dots, a_D$
+and lets the number of near-tangent directions be whatever it is, at whatever
+scale, without a threshold and without a prior commitment to $d$.
+
+Consider a distribution on $\mathbb{S}^1\subset\mathbb{R}^2$ which is a mixture of 2 uniform densities on 2 disjoint semicircles. We let the mixture be again in a 1:3 ratio.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/circle-ridge.png}
+        \caption{Ridge of a circle with $\sigma=0.54$}
+        \label{fig:circle_ridge_1}
+    \end{subfigure}%
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/circle-ridge-2.png}
+        \caption{Ridge of a circle with $\sigma = 0.58$}
+        \label{fig:circle_ridge_2}
+    \end{subfigure}
+    \caption{Comparison of circle ridges at different noise levels $\sigma$.}
+    \label{fig:circle_ridges}
+\end{figure}
+
+There are two behaviours which we see in the evolution of the ridge
+\paragraph{Impact of Density} In figure \ref{fig:circle_ridge_1} we see that the less dense left half of the circle is moving towards the centre at a much faster rate that the denser right half. This is expected since the higher density areas are more robust to smoothing, since there is more mass there. 
+
+\paragraph{Topology Change} Similar to the 1-d case, in figure \ref{fig:circle_ridge_2} we see that the ridge is no longer topologically a circle. So it is not just the geometry which is changing over time but also the topology. In the case where the density is uniform over the entire circle this occurs when the ridge shrinks to a point, but here it splits and then changes abruptly.
 
 
 \newpage
+
 \section{Posterior Covariance Field}
 \label{sec:pcf}
 
@@ -1049,5 +1331,6 @@ This prescription allocates more discretization points to regions in which the p
 
 \bibliographystyle{plainnat}
 \bibliography{references}
+
 
 \end{document}

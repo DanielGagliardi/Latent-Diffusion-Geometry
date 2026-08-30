@@ -1,13 +1,58 @@
-\begin{thebibliography}{1}
+\begin{thebibliography}{10}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
   \providecommand{\doi}[1]{doi: #1}\else
   \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
 
+\bibitem[Aamari and Berenfeld(2024)]{aamari2024theory}
+Eddie Aamari and Cl{\'e}ment Berenfeld.
+\newblock A theory of stratification learning.
+\newblock \emph{arXiv preprint arXiv:2405.20066}, 2024.
+
+\bibitem[Albergo et~al.(2025)Albergo, Boffi, and Vanden-Eijnden]{albergo2025stochastic}
+Michael Albergo, Nicholas~M Boffi, and Eric Vanden-Eijnden.
+\newblock Stochastic interpolants: A unifying framework for flows and diffusions.
+\newblock \emph{Journal of Machine Learning Research}, 26\penalty0 (209):\penalty0 1--80, 2025.
+
+\bibitem[Brown et~al.(2022{\natexlab{a}})Brown, Caterini, Ross, Cresswell, and Loaiza-Ganem]{brown2022union}
+Bradley~CA Brown, Anthony~L Caterini, Brendan~Leigh Ross, Jesse~C Cresswell, and Gabriel Loaiza-Ganem.
+\newblock The union of manifolds hypothesis.
+\newblock In \emph{NeurIPS 2022 Workshop on Symmetry and Geometry in Neural Representations}, 2022{\natexlab{a}}.
+
+\bibitem[Brown et~al.(2022{\natexlab{b}})Brown, Caterini, Ross, Cresswell, and Loaiza-Ganem]{brown2022verifying}
+Bradley~CA Brown, Anthony~L Caterini, Brendan~Leigh Ross, Jesse~C Cresswell, and Gabriel Loaiza-Ganem.
+\newblock Verifying the union of manifolds hypothesis for image data.
+\newblock \emph{arXiv preprint arXiv:2207.02862}, 2022{\natexlab{b}}.
+
+\bibitem[Ho et~al.(2020)Ho, Jain, and Abbeel]{ho2020denoising}
+Jonathan Ho, Ajay Jain, and Pieter Abbeel.
+\newblock Denoising diffusion probabilistic models.
+\newblock \emph{Advances in neural information processing systems}, 33:\penalty0 6840--6851, 2020.
+
+\bibitem[Lipman et~al.(2022)Lipman, Chen, Ben-Hamu, Nickel, and Le]{lipman2022flow}
+Yaron Lipman, Ricky~TQ Chen, Heli Ben-Hamu, Maximilian Nickel, and Matt Le.
+\newblock Flow matching for generative modeling.
+\newblock \emph{arXiv preprint arXiv:2210.02747}, 2022.
+
 \bibitem[Potaptchik et~al.(2024)Potaptchik, Azangulov, and Deligiannidis]{potaptchik2024linear}
 Peter Potaptchik, Iskander Azangulov, and George Deligiannidis.
 \newblock Linear convergence of diffusion models under the manifold hypothesis.
 \newblock \emph{arXiv preprint arXiv:2410.09046}, 2024.
+
+\bibitem[Song et~al.(2020{\natexlab{a}})Song, Meng, and Ermon]{song2020denoising}
+Jiaming Song, Chenlin Meng, and Stefano Ermon.
+\newblock Denoising diffusion implicit models.
+\newblock \emph{arXiv preprint arXiv:2010.02502}, 2020{\natexlab{a}}.
+
+\bibitem[Song and Ermon(2019)]{song2019generative}
+Yang Song and Stefano Ermon.
+\newblock Generative modeling by estimating gradients of the data distribution.
+\newblock \emph{Advances in neural information processing systems}, 32, 2019.
+
+\bibitem[Song et~al.(2020{\natexlab{b}})Song, Sohl-Dickstein, Kingma, Kumar, Ermon, and Poole]{song2020score}
+Yang Song, Jascha Sohl-Dickstein, Diederik~P Kingma, Abhishek Kumar, Stefano Ermon, and Ben Poole.
+\newblock Score-based generative modeling through stochastic differential equations.
+\newblock \emph{arXiv preprint arXiv:2011.13456}, 2020{\natexlab{b}}.
 
 \end{thebibliography}
