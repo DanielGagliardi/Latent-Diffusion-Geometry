@@ -103,7 +103,53 @@ A key challenge of this project has been stirking the balance between geometry: 
 \section{Introduction}
 \label{sec:intro}
 
-We started by looking at \citep{potaptchik2024linear}.
+\subsection{Initial Project}
+The progress in generative modelling over the last decade has been rapid. A key shift was the introduction of score based generative models (SGM), also known as diffusion models, which allow us to interpolate between a know distribution (usually a standard Gaussian), and a target distribution $p_\text{data}$, by training a network based on data $X\sim p_\text{data}$. By repeatedly adding noise to a target density, and training a denoising network, one can sample from $p_\text{data}$. Now, flow matching methods are the standard implementation of diffusion based generative models. These crucially can be viewed as a SGM.
+
+While vast amounts of work has been done on improving the capabilities of diffusion models, the goemetry of the entire diffusion process has been under explored.
+
+Initially, this research internship aimed to investigate the geometry of both the autoencoder and denoiser in latent diffusion models. If one can show that the geometry of a target distribtuion influences the estimation of scores, discretisation error, or sampling stability, then the case can be made that when the autoencoder and diffusion model are trained jointly, that the autoencoder learns a more geometrically regular embedding.
+
+We spent the internship so far almost entirely looking at the geometry of diffusion.
+
+\subsection{Existing work}
+
+There exists literature on how different geometric aspects affect the diffusion process, but these are mostly asymptotic results for highly regular target densities. [list some papers!!!] 
+
+The main challenge of the question ``how does geomerty affect diffusion'' is what do we mean by geometry? There are some issues with existing methods which make use of dimension and reach/curvature of the support of $p_\text{data}$ :
+\begin{itemize}
+    \item Dimension:
+    \begin{itemize}
+
+        \item Ill-posed to assign a dimension $d<D$ to a density which is absolutely continuous with respect to $\R^D$
+        \item Dimension of $p_\text{data}$ may not be constant
+        \item Dimension of $p_\text{data}$ may not be well defined everywhere, for example at intersections
+        \item Only considers dimension of target, now how effective dimension might change.
+        
+    \end{itemize}
+    \item Reach, curvature:
+    \begin{itemize}
+        \item Can be $0,\infty$ at intersections or corners
+        \item Can vary wildy along the support of $p_\text{data}$
+    \end{itemize}
+\end{itemize}
+
+\subsection{Objects Investigated}
+
+This gap in the literature is the primary of the project. As such, a new object other than dimension or reach or curvature had to be found. Throughout we investigated several before landing on the final and most promising object: the posterior covariance.
+
+\begin{itemize}
+    \item Pullback metric of flow $G_{t, T}(x)$
+    \item Level sets
+    \item Ridges
+    \item Posterior Covariance
+\end{itemize}
+
+[!!!make a table comparing them]
+
+\subsection{Main Contribution}
+We find that the spectrum of the posterior covariance captures geometric variation, and use functionals of the spectrum to understand geometric variation throughout the diffusion process. One of the things this allows us to do is pick a disctetisation schedule to reduce the discretisation error in sampling.
+
 
 \newpage
 \section{Background}
@@ -317,13 +363,334 @@ carried by a contraction factor that the scalar constant cannot see.
 
 
 
+\subsection{A two-direction picture}
+\label{subsec:two-direction}
+ 
+The gap between the matrix and scalar bounds is already visible in the simplest
+anisotropic model. Fix an orthogonal splitting $\R^D=E_\parallel\oplus E_\perp$
+into a tangent-like block and a normal-like block, write $x=(x_\parallel,x_\perp)$
+accordingly, and take the learnt velocity to be linear, block-diagonal,
+expansive on $E_\parallel$ and contractive on $E_\perp$:
+\begin{equation}
+  \hat v_t(x_\parallel,x_\perp)=\big(\ell_t x_\parallel,\ -\gamma_t x_\perp\big),
+  \qquad \gamma_t\ge 0.
+  \label{eq:block-field}
+\end{equation}
+Its Jacobian $\nabla\hat v_t=\mathrm{diag}(\ell_t I_\parallel,-\gamma_t I_\perp)$
+is constant in space, so the derivative flow \eqref{eq:jacobian-ode} integrates
+blockwise and the pullback metric \eqref{eq:pullback} is diagonal:
+\begin{equation}
+  \hat J_{t,T}=
+  \begin{pmatrix}
+    e^{\int_t^T\ell_s\dd s}\,I_\parallel & 0\\[2pt]
+    0 & e^{-\int_t^T\gamma_s\dd s}\,I_\perp
+  \end{pmatrix},
+  \qquad
+  G_{t,T}=
+  \begin{pmatrix}
+    e^{2\int_t^T\ell_s\dd s}\,I_\parallel & 0\\[2pt]
+    0 & e^{-2\int_t^T\gamma_s\dd s}\,I_\perp
+  \end{pmatrix}.
+  \label{eq:block-G}
+\end{equation}
+Splitting the error as $\delta v_t=\delta v_t^\parallel+\delta v_t^\perp$ with
+$\delta v_t^\parallel\in E_\parallel$ and $\delta v_t^\perp\in E_\perp$, the
+integrand of the matrix bound \eqref{eq:matrix-bound} separates,
+\begin{equation}
+  \big\langle\delta v_t,\,G_{t,T}\,\delta v_t\big\rangle^{1/2}
+  =\Big(e^{2\int_t^T\ell_s\dd s}\,\|\delta v_t^\parallel\|^2
+       +e^{-2\int_t^T\gamma_s\dd s}\,\|\delta v_t^\perp\|^2\Big)^{1/2}.
+  \label{eq:block-integrand}
+\end{equation}
+A tangent error is carried to the terminal time by the expansion factor
+$e^{\int_t^T\ell}$; a normal error is carried by the contraction factor
+$e^{-\int_t^T\gamma}$ and is therefore damped.
+ 
+The scalar estimate cannot distinguish the two. Its rate is the largest
+eigenvalue of the symmetric Jacobian,
+\begin{equation}
+  \lambda_{\max}\big(S_t\big)=\max\{\ell_t,\,-\gamma_t\}=\ell_t
+  \qquad(\ell_t\ge 0),
+  \label{eq:block-scalar-rate}
+\end{equation}
+so Corollary~\ref{cor:scalar} propagates \emph{both} error components with the
+tangent expansion factor $e^{\int_t^T\ell}$. It replaces the normal contraction
+$e^{-\int_t^T\gamma}$ by expansion, overestimating the contribution of a normal
+error by the factor $e^{\int_t^T(\ell_s+\gamma_s)\dd s}$. When the normal block
+is strongly contracting---as it is near a terminal manifold, where
+$\gamma_t\sim(1-t)^{-1}$ and $e^{-\int_t^T\gamma}$ decays polynomially in
+$1-t$---this overestimate is the entire difference between a persistent error
+and a damped one. This is where the anisotropy pays.
+ 
+\subsection{What the estimate requires of the error}
+\label{subsec:direction}
+ 
+The two bounds depend on the error through different amounts of information, and
+this raises a natural objection. The scalar bound \eqref{eq:scalar-bound} uses
+only the magnitude $\|\delta v_t\|_{L^1(\rho_t)}$. The matrix bound
+\eqref{eq:matrix-bound} uses the quadratic form
+$\langle\delta v_t,G_{t,T}\delta v_t\rangle$, that is, the \emph{direction} of
+$\delta v_t$ relative to the eigenframe of $G_{t,T}$. Since the exact field
+$v_t$ is unknown, the error $\delta v_t=v_t-\hat v_t$ is never observed, and its
+direction still less so. It is not immediate that the matrix bound is any more
+usable than the scalar one.
+ 
+The resolution is that neither bound is an estimator: both are a priori
+certificates. The scalar bound is valid because it implicitly places
+$\delta v_t$ along the most expansive eigenvector of $G_{t,T}$, which is exactly
+the source of its looseness. The matrix bound is a family of certificates
+indexed by hypotheses on where the error lies, and it becomes informative as
+soon as one can argue, on structural grounds, that the error concentrates in
+contracted directions. The direction is supplied not by measuring $\delta v_t$
+but by the geometry of the \emph{target}.
+ 
+Near a smooth embedded manifold this structure is explicit. The exact velocity
+$v_t$, which is fixed by the score of the noised target, admits to leading order
+a canonical decomposition: a rigid normal restoring field of model-independent
+functional form, a tangential component set by the intrinsic density on the
+manifold, and a moving ridge that locates the normal zero of the field. Any
+learnt error is then graded in the \emph{same} frame into a normal-amplitude
+component, a tangential-density component, and a ridge-displacement component.
+The matrix bound assigns each its own weight through $G_{t,T}$: normal-amplitude
+errors are damped by the normal contraction factor of
+\autoref{subsec:two-direction}, tangential-density errors are carried by the
+tangential expansion factor and persist, and ridge-displacement errors are
+normal but enter with the singular weight $\sigma_t^{-2}$, since a normal
+displacement of the ridge by $\Delta$ changes the leading normal field by
+$\Delta/\sigma_t^{2}$. The estimate never requires $\delta v_t$ to be known; it
+requires the target to furnish a fixed anisotropic frame in which any error is
+automatically decomposed. We construct this frame in \autoref{sec:pcf}.
+ 
+One assumption must be stated now, because it is used throughout. The projectors
+defining the frame---$P_t$ onto the tangent block and $Q_t=I-P_t$ onto the
+normal block---must be a single field, determined by the target and shared
+across all learnt fields. Re-deriving the frame from each model's own error
+would reintroduce model dependence into the weights and render comparisons
+between models meaningless. We therefore fix $P_t$ once, from the target
+geometry, and read every error in that frame; concretely, $P_t$ is built from
+the spectrum of the posterior-covariance operator $A_t$ in \autoref{sec:pcf}.
+
 \newpage
+
+
 \section{Level Sets}
 \label{sec:level_sets}
 
+ as we smooth data which lies on or is concentrated around a manifold two main affects occur. Smoothing in the normal direction and smoothing and tangent direction. Smoothing in the tangent direction makes a density more uniform along a manifold. Therefore our level sets should be better behaved.
+
+Let $p^\star : \mathbb{R}^D \to \mathbb{R}_+$ denote the initial density, and let
+$p_{\sigma}$ denote its Gaussian-smoothed version,
+\begin{equation}
+    p_{\sigma}(x)
+    =
+    (G_{\sigma} * p^\star)(x),
+    \qquad
+    G_{\sigma}(x)
+    =
+    \frac{1}{(2\pi\sigma^2)^{D/2}}
+    \exp\!\left(-\frac{\|x\|^2}{2\sigma^2}\right).
+\end{equation}
+For a regular value $c$, the corresponding level set is
+\begin{equation}
+    \mathcal{M}_c^\sigma
+    :=
+    \left\{x \in \mathbb{R}^D : p_{\sigma}(x)=c\right\},
+    \qquad
+    \nabla p_{\sigma}(x)\neq 0
+    \quad
+    \text{for }x\in\mathcal{M}_c^\sigma.
+\end{equation}
+The unit normal to $\mathcal{M}_c^\sigma$ is
+\begin{equation}
+    n(x)
+    =
+    \frac{\nabla p_{\sigma}(x)}
+    {\|\nabla p_{\sigma}(x)\|}.
+\end{equation}
+
+For a tangent direction $v \in T_x\mathcal{M}_c^\sigma$, the derivative of the
+normal is
+\begin{equation}
+    D_v n
+    =
+    \frac{1}{\|\nabla p_{\sigma}\|}
+    \left(I-nn^\top\right)
+    D^2 p_{\sigma}\,v
+    =
+    \frac{1}{\|\nabla p_{\sigma}\|}
+    P_T D^2 p_{\sigma}\,v,
+    \label{eq:normal-derivative}
+\end{equation}
+where
+\begin{equation}
+    P_T := I-nn^\top
+\end{equation}
+is the orthogonal projection onto the tangent space
+$T_x\mathcal{M}_c^\sigma$. Thus, the variation of the normal field---and hence
+the local curvature of the level set---is determined by the Hessian of the
+density.
+
+Gaussian smoothing regularizes not only the density itself, but all of its
+spatial derivatives. In particular, for any $k\geq 0$,
+\begin{equation}
+    D^k p_{\sigma}
+    =
+    D^k(G_{\sigma} * p^\star)
+    =
+    (D^k G_{\sigma}) * p^\star.
+    \label{eq:derivative-smoothing}
+\end{equation}
+Hence increasing $\sigma$ smooths the density and simultaneously suppresses
+fine-scale variation in its gradient, Hessian, and higher-order derivatives.
+
+This smoothing has a particularly simple interpretation in the Fourier
+domain. Writing $\widehat{p}_{\sigma}$ for the Fourier transform,
+\begin{equation}
+    \widehat{p}_{\sigma}(\xi)
+    =
+    \widehat{G}_{\sigma}(\xi)\,
+    \widehat{p^\star}(\xi)
+    =
+    \exp\!\left(-\frac{\sigma^2\|\xi\|^2}{2}\right)
+    \widehat{p^\star}(\xi).
+    \label{eq:fourier-smoothing}
+\end{equation}
+Thus a Fourier mode of spatial frequency $\|\xi\|$ is attenuated by
+$\exp(-\sigma^2\|\xi\|^2/2)$: high-frequency components decay quadratically
+faster in frequency. Consequently, Gaussian smoothing preferentially removes
+the fine-scale spatial variation of $p^\star$.
+
+The effect on the geometry of a level set follows directly from
+\eqref{eq:normal-derivative}. Its shape operator is
+\begin{equation}
+    S
+    :=
+    -P_T Dn P_T
+    =
+    -\frac{1}{\|\nabla p_{\sigma}\|}
+    P_T D^2p_{\sigma} P_T,
+    \label{eq:shape-operator}
+\end{equation}
+up to the choice of orientation for the normal. The eigenvalues of $S$ are
+the principal curvatures of $\mathcal{M}_c^\sigma$. Therefore, Gaussian
+smoothing affects the shape of the level set through two quantities:
+the Hessian $D^2p_{\sigma}$, which controls variation of the normal, and
+$\|\nabla p_{\sigma}\|$, which sets the scale relating density variation to
+geometric variation. In particular, since Gaussian smoothing suppresses
+high-frequency components of $D^2p_{\sigma}$, it suppresses the fine-scale
+variation of the shape operator and hence removes small-scale geometric
+structure from the level set.
+
+It is important to distinguish this suppression of fine-scale variation from
+a pointwise reduction in curvature. In general, Gaussian smoothing does not
+imply that the principal curvatures of a fixed level set decrease
+monotonically with $\sigma$. Indeed, the shape operator
+\begin{equation}
+    S_\sigma(x)
+    =
+    -\frac{1}{\|\nabla p_\sigma(x)\|}
+    P_T D^2p_\sigma(x) P_T,
+    \qquad
+    x\in\mathcal{M}_c^\sigma,
+\end{equation}
+depends on both $D^2p_\sigma$ and $\nabla p_\sigma$, and is evaluated on the
+moving level set $\mathcal{M}_c^\sigma$. Although Gaussian smoothing
+suppresses high-frequency components of $D^2p_\sigma$, it simultaneously
+changes $\nabla p_\sigma$ and the location of the level set itself. Hence
+there is no general pointwise monotonicity of $S_\sigma$ or of its
+eigenvalues.
+
+Moreover, the topology of $\mathcal{M}_c^\sigma$ can change with $\sigma$.
+Such a change occurs when the level $c$ passes through a critical point,
+i.e., when
+\begin{equation}
+    p_\sigma(x)=c,
+    \qquad
+    \nabla p_\sigma(x)=0.
+\end{equation}
+For example, two components of a superlevel set may merge through a
+neck as $\sigma$ increases. Thus, while smoothing removes fine-scale
+spatial variation from the density and its derivatives, it should not be
+interpreted as a monotone decrease of the curvature of every individual
+level set. The rigorous statement is instead that Gaussian smoothing
+preferentially suppresses spatial frequencies at scales smaller than
+$\sigma$, and therefore suppresses fine-scale geometric variation encoded
+by the derivatives of the density.
+
+More generally, adding Gaussian noise monotonically suppresses all
+$L^2$ Sobolev energies of the smoothed density.  Let
+\begin{equation}
+    p_\sigma = G_\sigma * p^\star,
+    \qquad
+    G_\sigma(x)
+    =
+    \frac{1}{(2\pi\sigma^2)^{D/2}}
+    \exp\!\left(-\frac{\|x\|^2}{2\sigma^2}\right),
+\end{equation}
+where $D$ is the ambient dimension.  Since
+$\partial_{\sigma^2}p_\sigma = \frac{1}{2}\Delta p_\sigma$, we have, for
+every integer $k\geq 0$,
+\begin{equation}
+    \frac{\partial}{\partial \sigma^2}
+    \frac{1}{2}\int_{\mathbb{R}^D}
+    \left|D^k p_\sigma(x)\right|^2\,dx
+    =
+    -\frac{1}{2}
+    \int_{\mathbb{R}^D}
+    \left|\nabla D^k p_\sigma(x)\right|^2\,dx
+    \leq 0.
+    \label{eq:sobolev-monotonicity}
+\end{equation}
+Thus, increasing the noise level $\sigma$ monotonically decreases the
+$L^2$ norms of all spatial derivatives of $p_\sigma$.  In particular,
+\begin{align}
+    \frac{\partial}{\partial \sigma^2}
+    \frac{1}{2}\int |\nabla p_\sigma|^2\,dx
+    &=
+    -\frac{1}{2}\int |\Delta p_\sigma|^2\,dx
+    \leq 0,\\
+    \frac{\partial}{\partial \sigma^2}
+    \frac{1}{2}\int |D^2p_\sigma|^2\,dx
+    &=
+    -\frac{1}{2}\int |\nabla\Delta p_\sigma|^2\,dx
+    \leq 0.
+\end{align}
+Equivalently, in the Fourier domain,
+\begin{equation}
+    \frac{1}{2}\int_{\mathbb{R}^D}
+    |D^k p_\sigma(x)|^2\,dx
+    \;\propto\;
+    \frac{1}{2}\int_{\mathbb{R}^D}
+    \|\xi\|^{2k}
+    e^{-\sigma^2\|\xi\|^2}
+    \left|\widehat{p^\star}(\xi)\right|^2\,d\xi.
+    \label{eq:fourier-sobolev}
+\end{equation}
+Hence increasing $\sigma$ progressively removes increasingly fine-scale
+structure, with spatial frequency $\|\xi\|$ suppressed according to
+$e^{-\sigma^2\|\xi\|^2}$.
+
+This relates to the conventional wisdom where we need more refined time steps as we approach closer to our final density to capture the higher frequency structure of density. This is particularly apparent for image and audio data. JPEG compression takes advantage of writing the image as a Fourier decomposition, and in doing so discard the high frequency terms which are not noticeable to the human eye. 
+
 \newpage
+
 \section{Ridges}
 \label{sec:ridges}
+
+An at first unintuitive aspect of the manifold hypothesis is that the lower dimensional space around which data concentrate is not necessarily, or in fact usually, the initial manifold. This is because as the amount of noise that we add increases the effective radius with which we convolve grows and includes more of our initial manifold. We see a noise density concentrating around a different space. This begs the question ``what is this new space and how does it behave and evolve?''
+
+This becomes immediately obvious when considering smoothing a pair of Gaussians: the modes of the sum is not the union of the modes.
+
+ below as an example of what smoothing a density on a sine wave can do.
+
+  With this intuition it's fairly easy to rediscover the definition of a rich. It's where the normal component of our changing density is zero. But a priori we do not know which components are normal.
+
+  %insert definition of ridge
+
+
+
+
+
 
 \newpage
 \section{Posterior Covariance Field}
@@ -507,6 +874,9 @@ its measure.
 
 \subsection{MMSE-driven discretization}
 
+We started by looking at \citep{potaptchik2024linear}.
+
+
 We consider the additive Gaussian perturbation
 \begin{equation}
     X_t = X_0 + \sqrt{t}\,Z,
@@ -665,6 +1035,7 @@ so the resulting MMSE-adaptive discretization is
 \end{equation}
 
 This prescription allocates more discretization points to regions in which the posterior uncertainty, measured by the MMSE, changes rapidly, while accounting for the $t^{-2}$ amplification of score errors at small noise scales.
+
 
 \subsection{Examples}
 
