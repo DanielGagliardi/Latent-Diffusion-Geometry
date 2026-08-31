@@ -1,4 +1,4 @@
-\begin{thebibliography}{12}
+\begin{thebibliography}{15}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -15,6 +15,11 @@ Michael Albergo, Nicholas~M Boffi, and Eric Vanden-Eijnden.
 \newblock Stochastic interpolants: A unifying framework for flows and diffusions.
 \newblock \emph{Journal of Machine Learning Research}, 26\penalty0 (209):\penalty0 1--80, 2025.
 
+\bibitem[Benton et~al.(2024)Benton, De~Bortoli, Doucet, and Deligiannidis]{benton2024nearly}
+Joe Benton, Valentin De~Bortoli, Arnaud Doucet, and George Deligiannidis.
+\newblock Nearly $ d $-linear convergence bounds for diffusion models via stochastic localization.
+\newblock In \emph{International Conference on Learning Representations}, volume 2024, pages 36916--36936, 2024.
+
 \bibitem[Brown et~al.(2022{\natexlab{a}})Brown, Caterini, Ross, Cresswell, and Loaiza-Ganem]{brown2022union}
 Bradley~CA Brown, Anthony~L Caterini, Brendan~Leigh Ross, Jesse~C Cresswell, and Gabriel Loaiza-Ganem.
 \newblock The union of manifolds hypothesis.
@@ -24,6 +29,11 @@ Bradley~CA Brown, Anthony~L Caterini, Brendan~Leigh Ross, Jesse~C Cresswell, and
 Bradley~CA Brown, Anthony~L Caterini, Brendan~Leigh Ross, Jesse~C Cresswell, and Gabriel Loaiza-Ganem.
 \newblock Verifying the union of manifolds hypothesis for image data.
 \newblock \emph{arXiv preprint arXiv:2207.02862}, 2022{\natexlab{b}}.
+
+\bibitem[Federer(1959)]{federer1959curvature}
+Herbert Federer.
+\newblock Curvature measures.
+\newblock \emph{Transactions of the American mathematical Society}, 93\penalty0 (3):\penalty0 418--491, 1959.
 
 \bibitem[Genovese et~al.(2014)Genovese, Perone-Pacifico, Verdinelli, and Wasserman]{genovese2014nonparametric}
 Christopher~R Genovese, Marco Perone-Pacifico, Isabella Verdinelli, and Larry Wasserman.
@@ -39,6 +49,11 @@ Dongning Guo, Shlomo Shamai, and Sergio Verd{\'u}.
 Jonathan Ho, Ajay Jain, and Pieter Abbeel.
 \newblock Denoising diffusion probabilistic models.
 \newblock \emph{Advances in neural information processing systems}, 33:\penalty0 6840--6851, 2020.
+
+\bibitem[Liang et~al.(2025)Liang, Huang, and Chen]{liang2025low}
+Jiadong Liang, Zhihan Huang, and Yuxin Chen.
+\newblock Low-dimensional adaptation of diffusion models: Convergence in total variation.
+\newblock \emph{arXiv preprint arXiv:2501.12982}, 2025.
 
 \bibitem[Lipman et~al.(2022)Lipman, Chen, Ben-Hamu, Nickel, and Le]{lipman2022flow}
 Yaron Lipman, Ricky~TQ Chen, Heli Ben-Hamu, Maximilian Nickel, and Matt Le.

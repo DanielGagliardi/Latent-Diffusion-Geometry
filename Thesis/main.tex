@@ -69,22 +69,22 @@
 
 Throughout my undergraduate and graduate studies in mathematics I have been caught between two main interests: the applied world of machine learning, and the theoretical world of topology and geometry. While this is often viewed as an unusual mix to choose, I have always found it greatly enjoyable.
 
-This culminated in me wanting to answer the question of what is happening to the ``shape'' of data throughout a machine learning process, and also what even is the ``shape'' of data.
+This resulted in me wanting to answer the question of what is happening to the ``shape'' of data throughout a machine learning process, and also what even is the ``shape'' of data.
 
-The value in understanding this is twofold: first, to be able to make better models by leveraging our understanding of how they work, and second, to be able to understand how to interpret what these models are doing. The dance between naturally arising data and the model trying to fit without knowing how the data is generated is a curious one. My main motivation was to try to understand this. 
+The value in understanding this is twofold: firstly, to be able to make better models by leveraging our understanding of how they work; and second, to be able to understand how to interpret what these models are doing. The dance between naturally arising data and the model trying to fit without knowing how the data is generated is fascinating. My main motivation was to try to understand this. 
 
 One big idea is the notion of data lying on some low-dimensional space, which makes both learning and sampling from distributions supported on this lower-dimensional space easier. However this belief only truly simplifies the system in the small noise regime. All sorts of complex geometry can happen in the higher noise regimes. We do not, as we will see, have a nicely behaved interpolating family of manifolds.
 
-Before doing the IASD M2 program, I had written a master's dissertation on diffusion models under the manifold hypothesis, under the supervision of George Deligiannidis. During this I became deeply interested in dimension estimation of datasets. This at best vauge and at worse terribly ill-posed question seemed to me one where and answer would tell us a lot about the natural geometry of data, and how diffusion models are able to make use of this. Almost every paper I found on the interplay between manifolds and diffusion models cited work from Eddie Aamari.
+Before doing the IASD M2 program, I had written a master's dissertation on diffusion models under the manifold hypothesis, under the supervision of George Deligiannidis. During this I became deeply interested in dimension estimation of datasets. This at best vauge and at worst terribly ill-posed question seemed to me one where and answer would tell us a lot about the natural geometry of data, and how diffusion models are able to make use of this. Almost every paper I found on the interplay between manifolds and diffusion models cited work from Eddie Aamari.
 
 In November 2025 I reached out to Eddie Aamari to further discuss what the geometry of data could look like, and this led to this internship project. The initial goal was to understand the interplay between geometry affecting sampling error and how this could encourage simpler embeddings in a latent diffusion setting. However, given the complexity of work being done limited time was spent on investigating autoencoders so far.
 
-A key challenge of this project has been stirking the balance between geometry: where things are well defined, and diffusion of probability densities: where simply by adding noise we violently change the notions of geometry we would like to equip our density with. This tradeoff has led to looking at several objects, which while interesting in their own right have not been helpful in bounding sampling error. We do think the final part on posterior covariance fields \autoref{sec:pcf} does provide new insight on where true complexity lies in the diffusion process.
+A key challenge of this project has been stirking the balance between geometry: where things are well defined, and diffusion of probability densities: where simply by adding noise we violently change the notions of geometry we would like to equip our density with. This tradeoff has led to looking at several objects, which while interesting in their own right have not been helpful in bounding sampling error. I do believe that the final part on posterior covariance fields \autoref{sec:pcf} does provide a new insight on where true complexity lies in the diffusion process.
 
 \newpage
 
 \begin{abstract}
-    This is the abstract of the thesis. 
+    Diffusion based generative models have become ubiqitous over recent years. Their success is often attributed to the geometric structure of natual data. This is commonly refered to as the manifold hypothesis. In this report we summarise our main work so far on understanding the geometry of diffusion. We examine an anisotropic stability bound, level sets, ridges, and functionals of the posterior covariance. Ultimately, we settle on the spectrum of the posterior covariance being the key object to understanding the geometery throughout the diffusion process.
 \end{abstract}
 
 \vspace{30mm}
@@ -115,9 +115,9 @@ We spent the internship so far almost entirely looking at the geometry of diffus
 
 \subsection{Existing work}
 
-There exists literature on how different geometric aspects affect the diffusion process, but these are mostly asymptotic results for highly regular target densities. [list some papers!!!] 
+There exists literature on how different geometric aspects affect the diffusion process, but these are mostly asymptotic results for highly regular target densities \citep{benton2024nearly}, \citep{potaptchik2024linear}, \citep{liang2025low}.
 
-The main challenge of the question ``how does geomerty affect diffusion'' is what do we mean by geometry? There are some issues with existing methods which make use of dimension and reach/curvature of the support of $p_\text{data}$ :
+The main challenge of the question ``how does geomerty affect diffusion'' is answering what we mean by ``geometry''. There are some issues with existing methods which make use of dimension and reach/curvature of the support of $p_\text{data}$ :
 \begin{itemize}
     \item Dimension:
     \begin{itemize}
@@ -146,18 +146,20 @@ This gap in the literature is the primary of the project. As such, a new object 
     \item Posterior Covariance
 \end{itemize}
 
-[!!!make a table comparing them]
+[!!!make a table comparing them after meeting!!!]
 
 \subsection{Main Contribution}
-We find that the spectrum of the posterior covariance captures geometric variation, and use functionals of the spectrum to understand geometric variation throughout the diffusion process. One of the things this allows us to do is pick a disctetisation schedule to reduce the discretisation error in sampling.
+We find that the spectrum of the posterior covariance captures geometric variation, and use functionals of the spectrum to understand geometric variation throughout the diffusion process. One of the things this allows us to do is pick a discretisation schedule to reduce the discretisation error in sampling.
 
 
 \newpage
 \section{Background}
 \label{sec:background}
-Here we go over the necessary background needed for the project.
 
 \subsection{The Manifold Hypothesis}
+
+
+
 The manifold hypothesis is an explaination of the effectiveness of machine learning for unstructured high-dimensional data. It states that a distribution $X \sim p_\text{data}, X \in \R^D$ lies on (or is concentrated around) a submanifold $\M$ of lower dimension $d \ll D$. This effectively makes the number of degrees of freedom $d$, allowing models to learn these lower dimensional spaces in settings where we may have $n < D$ data points.
 
 The main argument for the manifold hypothesis is the curse of dimensionality, whereby there are too many dimensions making data very sparse and hard for models to learn from. Many counterintuitve behaviours are exhibited in high dimensional space, for example standard Gaussian data from $\mathcal{N}(0;\Id_D)$ concentrating around the shell of radius $\sqrt{D}$.
@@ -165,16 +167,29 @@ The main argument for the manifold hypothesis is the curse of dimensionality, wh
 The justification of the manifold hypothesis is that it is a good canidate model for naturaly arising data, which tends to be locally continuous, and have fewer degrees of freedom. The space of natural images is far smaller than the space of all possible images, for example.
 
 There are variations of the manifold hypothesis, with less restrictive assumptions. These include:
+
 \begin{itemize}
     \item The union of manifolds hypothesis \citep{brown2022union}, \citep{brown2022verifying}, which argue that standard manifold hypothesis is incomplete, and a union of manifolds of potentially different dimensions is a more realistic assumption
     \item The stratified space hypothesis \citep{aamari2024theory}, which extends this idea but allow for intersections between manifolds of different dimension
 \end{itemize}
 
+For completeness, we include here the definition of a manifold and the reach.
+
+A $d$-dimensional manifold is a topological space $\M$ that is locally isomorphic to an open subset of $\mathbb{R}^d$. So, for each $y \in \M$, there is an open set $y \in U_y \subseteq \M$ and a continuous function $\Phi_y: U_y \rightarrow \mathbb{R}^d$ such that $\Phi_y$ is a homeomorphism onto its image. The smoothness of the manifold is defined as the smoothness of the functions $\Phi_y$.
+
+When a manifold $M$ is embedded into $\mathbb{R}^D$, to control the regularity of the embedding \citep{federer1959curvature} introduce the notion of the reach $\tau=\tau(\M)$ which is defined as
+
+\[
+\tau:=\sup \left\{\varepsilon: \forall x \in \M^{\varepsilon}, \quad \exists!y \in M \text { s.t. } \operatorname{dist}(x, M)=\|x-y\|\right\},
+\]
+
+where $\M^{\varepsilon}=\left\{x \in \mathbb{R}^D: \operatorname{dist}(x, \M)<\varepsilon\right\}$ is the $\varepsilon$-neighborhood of $\M$. Equivalently, $\tau$ is the supremum over the radii of neighborhoods of $\M$ for which the projection is unique.
+
 \subsection{Flow Matching as a Score-Based Generative Model}
 
 Score-Based Generative Models (SGMs) \citep{ho2020denoising, song2019generative, song2020score} formulate generative modeling by estimating gradients of the log probability density (the score function). As noted by \citep{song2019generative}: ``Because gradients can be ill-defined and hard to estimate when the data resides on \textbf{low-dimensional manifolds}, we perturb the data with different levels of Gaussian noise, and jointly estimate the corresponding scores, i.e., the vector fields of gradients of the perturbed data distribution for all noise levels.''
 
-Flow Matching \citep{lipman2022flow, albergo2025stochastic} provides a continuous-time vector field framework that unifies and generalizes SGMs. Below, we outline the connection between Gaussian continuous flows and score matching.
+Flow Matching \citep{lipman2022flow, albergo2025stochastic} provides a continuous-time vector field framework that unifies and generalises SGMs. Below, we outline the connection between Gaussian continuous flows and score matching.
 
 \paragraph{Gaussian Flows and Interpolation Schedule.}
 In generative modeling via flow matching, we aim to construct a path transforming a base noise distribution $p_1 = \mathcal{N}(0, I_d)$ into a target data distribution $p_0$. Let $X_0 \sim p_0$ and $X_1 = \varepsilon \sim \mathcal{N}(0, I_d)$. The linear conditional flow $X_t = \varphi_t(X_0, \varepsilon)$ interpolates between data and noise according to:
@@ -213,7 +228,7 @@ Equation (6) demonstrates that the velocity field $v_t(x)$ is completely determi
 \begin{equation}
 \nabla_x \log p_t(x) \quad \iff \quad \mathbb{E}\left[\varepsilon \mid X_t = x\right] \quad \iff \quad \mathbb{E}\left[X_0 \mid X_t = x\right] \quad \iff \quad v_t(x)
 \end{equation}
-Sampling via the deterministic flow ODE $\dot{x}_t = v_t(x_t)$ parameterized by a score model recovers the probability flow ODE (e.g., DDIM \citep{song2020denoising}).
+Sampling via the deterministic flow ODE $\dot{x}_t = v_t(x_t)$ parameterised by a score model recovers the probability flow ODE (e.g., DDIM \citep{song2020denoising}).
 
 \subsection{Tweedie's 1\textsuperscript{st} and 2\textsuperscript{nd} Order Formulae}
 
@@ -1020,7 +1035,7 @@ Then
 \begin{proof}
 $\Pset$ is invariant under conjugation by orthogonal matrices, and for
 symmetric $A$ the Frobenius distance to a conjugation-invariant set is
-minimized by a $P$ sharing the eigenvectors of $A$ (a consequence of the
+minimised by a $P$ sharing the eigenvectors of $A$ (a consequence of the
 Hoffman--Wielandt inequality). It then remains to round each $a_i$ to the
 nearer of $0$ or $1$.
 \end{proof}
@@ -1048,9 +1063,9 @@ a_i = \frac{\text{posterior variance along } v_i}{\text{noise variance } t}
 \end{cases}
 \end{equation}
 The three design choices are then: threshold at $1$ (only expansion is
-penalized), measure the \emph{excess} $a_i-1$ (the neutral point is $1$,
+penalised), measure the \emph{excess} $a_i-1$ (the neutral point is $1$,
 not $0$), and square it (making the functional comparable to a squared
-Frobenius norm and penalizing strong expansion superlinearly).
+Frobenius norm and penalising strong expansion superlinearly).
 
 \paragraph{Link to ambiguity.}
 Suppose the posterior at $y$ is approximately
@@ -1147,7 +1162,7 @@ For additive Gaussian noise, Tweedie's formula gives
     =
     \frac{m_t(x)-x}{t}.
 \end{equation}
-The same martingale argument used in \citep{potaptchik2024linear} to control the score variation in the discretized reverse process then yields, for two noise levels
+The same martingale argument used in \citep{potaptchik2024linear} to control the score variation in the discretised reverse process then yields, for two noise levels
 $t<t'$,
 \begin{equation}
 \begin{aligned}
@@ -1197,7 +1212,7 @@ Consequently, the total discretisation error is approximated by
 
 
 \paragraph{Optimal allocation of time steps.}
-We now choose the discretisation points to minimize
+We now choose the discretisation points to minimise
 \eqref{eq:discrete-objective} subject to a fixed number $K$ of steps.
 Introduce the local step density
 \begin{equation}
@@ -1220,7 +1235,7 @@ while
     \int \frac{\alpha(t)}{n(t)}\,dt.
 \end{aligned}
 \end{equation}
-Minimizing this functional subject to
+Minimising this functional subject to
 $\int n(t)\,dt=K$ gives
 \begin{equation}
     n(t)\propto \sqrt{\alpha(t)},
