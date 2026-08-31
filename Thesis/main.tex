@@ -158,395 +158,321 @@ We find that the spectrum of the posterior covariance captures geometric variati
 
 \subsection{The Manifold Hypothesis}
 
+The manifold hypothesis offers an explanation for the effectiveness of machine learning algorithms on unstructured, high-dimensional data. It posits that a data distribution $X \sim p_\text{data}$ with $X \in \mathbb{R}^D$ lies on (or is concentrated near) a submanifold $\mathcal{M}$ of significantly lower dimension $d \ll D$. This restricts the effective degrees of freedom to $d$, enabling models to learn the underlying structure even in regimes where the sample size is smaller than the ambient dimension ($n < D$).
 
+The primary motivation for the manifold hypothesis stems from the curse of dimensionality, wherein the volume of high-dimensional space grows exponentially, rendering data extremely sparse. High-dimensional spaces also exhibit counter-intuitive geometric behaviors; for instance, standard Gaussian data $\mathcal{N}(0, I_D)$ concentrates tightly within a thin spherical shell of radius $\sqrt{D}$.
 
-The manifold hypothesis is an explanation of the effectiveness of machine learning for unstructured high-dimensional data. It states that a distribution $X \sim p_\text{data}, X \in \R^D$ lies on (or is concentrated around) a submanifold $\M$ of lower dimension $d \ll D$. This effectively makes the number of degrees of freedom $d$, allowing models to learn these lower dimensional spaces in settings where we may have $n < D$ data points.
+The rationale behind the manifold hypothesis is that natural data distributions are typically locally continuous and governed by relatively few degrees of freedom. For instance, the space of realistic natural images constitutes a tiny fraction of the space of all possible pixel configurations.
 
-The main argument for the manifold hypothesis is the curse of dimensionality, whereby there are too many dimensions making data very sparse and hard for models to learn from. Many counter-intuitive behaviours are exhibited in high dimensional space, for example standard Gaussian data from $\mathcal{N}(0;\Id_D)$ concentrating around the shell of radius $\sqrt{D}$.
-
-The justification of the manifold hypothesis is that it is a good candidate model for naturally arising data, which tends to be locally continuous, and have fewer degrees of freedom. The space of natural images is far smaller than the space of all possible images, for example.
-
-There are variations of the manifold hypothesis, with less restrictive assumptions. These include:
-
+Several variations of the manifold hypothesis relax its classical assumptions:
 \begin{itemize}
-    \item The union of manifolds hypothesis \citep{brown2022union}, \citep{brown2022verifying}, which argue that standard manifold hypothesis is incomplete, and a union of manifolds of potentially different dimensions is a more realistic assumption
-    \item The stratified space hypothesis \citep{aamari2024theory}, which extends this idea but allow for intersections between manifolds of different dimension
+    \item \textbf{The Union of Manifolds Hypothesis} \citep{brown2022union, brown2022verifying}: Argues that the classical single-manifold assumption is overly restrictive, modeling data instead as a union of multiple submanifolds of potentially varying dimensions.
+    \item \textbf{The Stratified Space Hypothesis} \citep{aamari2024theory}: Extends this formulation further by permitting intersections between submanifolds of different dimensions.
 \end{itemize}
 
-For completeness, we include here the definition of a manifold and the reach.
+For completeness, we review the formal definitions of a manifold and its reach.
 
-A $d$-dimensional manifold is a topological space $\M$ that is locally isomorphic to an open subset of $\mathbb{R}^d$. So, for each $y \in \M$, there is an open set $y \in U_y \subseteq \M$ and a continuous function $\Phi_y: U_y \rightarrow \mathbb{R}^d$ such that $\Phi_y$ is a homeomorphism onto its image. The smoothness of the manifold is defined as the smoothness of the functions $\Phi_y$.
+\begin{definition}[Manifold]
+A $d$-dimensional topological manifold $\mathcal{M}$ is a topological space that is locally homeomorphic to an open subset of $\mathbb{R}^d$. Specifically, for each $y \in \mathcal{M}$, there exists an open neighborhood $U_y \subseteq \mathcal{M}$ containing $y$ and a continuous mapping $\Phi_y: U_y \rightarrow \mathbb{R}^d$ such that $\Phi_y$ is a homeomorphism onto its image. The smoothness of $\mathcal{M}$ is governed by the differentiability of the coordinate maps $\Phi_y$.
+\end{definition}
 
-When a manifold $M$ is embedded into $\mathbb{R}^D$, to control the regularity of the embedding \citep{federer1959curvature} introduce the notion of the reach $\tau=\tau(\M)$ which is defined as
+When a manifold $\mathcal{M}$ is embedded in $\mathbb{R}^D$, its regularity can be quantified via the concept of \emph{reach} \citep{federer1959curvature}:
 
+\begin{definition}[Reach]
+The reach $\tau = \tau(\mathcal{M})$ of an embedded submanifold $\mathcal{M} \subset \mathbb{R}^D$ is defined as
 \[
-\tau:=\sup \left\{\varepsilon: \forall x \in \M^{\varepsilon}, \quad \exists!y \in M \text { s.t. } \operatorname{dist}(x, M)=\|x-y\|\right\},
+\tau := \sup \left\{ \varepsilon > 0 : \forall x \in \mathcal{M}^{\varepsilon}, \; \exists! y \in \mathcal{M} \text{ s.t. } \operatorname{dist}(x, \mathcal{M}) = \|x - y\| \right\},
 \]
-
-where $\M^{\varepsilon}=\left\{x \in \mathbb{R}^D: \operatorname{dist}(x, \M)<\varepsilon\right\}$ is the $\varepsilon$-neighbourhood of $\M$. Equivalently, $\tau$ is the suprenum over the radii of neighbourhoods of $\M$ for which the projection is unique.
+where $\mathcal{M}^{\varepsilon} = \left\{ x \in \mathbb{R}^D : \operatorname{dist}(x, \mathcal{M}) < \varepsilon \right\}$ denotes the open $\varepsilon$-neighborhood of $\mathcal{M}$. Equivalently, $\tau$ is the supremum over all neighborhood radii within which every point admits a unique orthogonal projection onto $\mathcal{M}$.
+\end{definition}
 
 \subsection{Flow Matching as a Score-Based Generative Model}
 
-Score-Based Generative Models (SGMs) \citep{ho2020denoising, song2019generative, song2020score} formulate generative modelling by estimating gradients of the log probability density (the score function). As noted by \citep{song2019generative}: ``Because gradients can be ill-defined and hard to estimate when the data resides on \textbf{low-dimensional manifolds}, we perturb the data with different levels of Gaussian noise, and jointly estimate the corresponding scores, i.e., the vector fields of gradients of the perturbed data distribution for all noise levels.''
+Score-Based Generative Models (SGMs) \citep{ho2020denoising, song2019generative, song2020score} formulate generative modeling by estimating the score function, defined as the gradient of the log probability density $\nabla_x \log p(x)$. As noted by \citet{song2019generative}:
+\begin{quote}
+``Because gradients can be ill-defined and hard to estimate when the data resides on \textbf{low-dimensional manifolds}, we perturb the data with different levels of Gaussian noise, and jointly estimate the corresponding scores, i.e., the vector fields of gradients of the perturbed data distribution for all noise levels.''
+\end{quote}
 
-Flow Matching \citep{lipman2022flow, albergo2025stochastic} provides a continuous-time vector field framework that unifies and generalises SGMs. Below, we outline the connection between Gaussian continuous flows and score matching.
+Flow Matching \citep{lipman2022flow, albergo2025stochastic} provides a continuous-time vector field framework that unifies and generalizes SGMs. Below, we outline the connection between Gaussian continuous flows and score matching.
 
 \paragraph{Gaussian Flows and Interpolation Schedule.}
-In generative modelling via flow matching, we aim to construct a path transforming a base noise distribution $p_1 = \mathcal{N}(0, I_d)$ into a target data distribution $p_0$. Let $X_0 \sim p_0$ and $X_1 = \varepsilon \sim \mathcal{N}(0, I_d)$. The linear conditional flow $X_t = \varphi_t(X_0, \varepsilon)$ interpolates between data and noise according to:
+In flow matching, the objective is to construct a continuous transport map pushing a base noise distribution $p_1 = \mathcal{N}(0, I_D)$ to a target data distribution $p_0$. Let $X_0 \sim p_0$ and $X_1 = \varepsilon \sim \mathcal{N}(0, I_D)$. The linear conditional path $X_t = \varphi_t(X_0, \varepsilon)$ interpolates between data and noise according to:
 \begin{equation}
-X_t = c_t X_0 + \sigma_t \varepsilon
+X_t = c_t X_0 + \sigma_t \varepsilon,
 \end{equation}
-where $c_t, \sigma_t \in \mathbb{R}$ are differentiable schedule functions satisfying the boundary conditions $c_0 = 1, \sigma_0 = 0$ and $c_1 = 0, \sigma_1 = 1$. Differentiating with respect to time $t$ yields the conditional velocity field:
+where $c_t, \sigma_t \in \mathbb{R}$ are continuously differentiable schedule functions satisfying boundary conditions $c_0 = 1, \sigma_0 = 0$ and $c_1 = 0, \sigma_1 = 1$. Differentiating $X_t$ with respect to time $t$ yields the conditional velocity field:
 \begin{equation}
-\dot{X}_t = \dot{c}_t X_0 + \dot{\sigma}_t \varepsilon
+\dot{X}_t = \dot{c}_t X_0 + \dot{\sigma}_t \varepsilon.
 \end{equation}
 
 \paragraph{Vector Field Formulation.}
- computational marginal probability density $p_t$ of $X_t$ evolves according to the continuity equation $\partial_t p_t = -\nabla \cdot (v_t p_t)$. The marginal vector field $v_t(x)$ that generates this trajectory is given by the conditional expectation:
+The marginal probability density $p_t$ of $X_t$ evolves according to the continuity equation $\partial_t p_t = -\nabla \cdot (v_t p_t)$. The marginal vector field $v_t(x)$ generating this continuous density transformation is obtained via the conditional expectation:
 \begin{equation}
-v_t(x) = \mathbb{E}\left[\dot{X}_t \mid X_t = x\right] = \dot{c}_t \mathbb{E}\left[X_0 \mid X_t = x\right] + \dot{\sigma}_t \mathbb{E}\left[\varepsilon \mid X_t = x\right]
+v_t(x) = \mathbb{E}\left[\dot{X}_t \mid X_t = x\right] = \dot{c}_t \mathbb{E}\left[X_0 \mid X_t = x\right] + \dot{\sigma}_t \mathbb{E}\left[\varepsilon \mid X_t = x\right].
 \end{equation}
 
 \paragraph{Derivation via Tweedie's Formula.}
-Because $p_t$ is the distribution of $c_t X_0$ corrupted by additive Gaussian noise $\sigma_t \varepsilon \sim \mathcal{N}(0, \sigma_t^2 I_d)$, Tweedie's denoising identity provides closed-form relationships between conditional expectations and the score function $\nabla_x \log p_t(x)$:
+Since $p_t$ corresponds to the distribution of $c_t X_0$ corrupted by additive Gaussian noise $\sigma_t \varepsilon \sim \mathcal{N}(0, \sigma_t^2 I_D)$, Tweedie's identity yields closed-form relationships between the conditional expectations and the score function $\nabla_x \log p_t(x)$:
 \begin{equation}
-\mathbb{E}\left[\varepsilon \mid X_t = x\right] = -\sigma_t \nabla_x \log p_t(x)
+\mathbb{E}\left[\varepsilon \mid X_t = x\right] = -\sigma_t \nabla_x \log p_t(x),
 \end{equation}
 \begin{equation}
-\mathbb{E}\left[X_0 \mid X_t = x\right] = \frac{x + \sigma_t^2 \nabla_x \log p_t(x)}{c_t}
+\mathbb{E}\left[X_0 \mid X_t = x\right] = \frac{x + \sigma_t^2 \nabla_x \log p_t(x)}{c_t}.
 \end{equation}
 
-Substituting equations (4) and (5) into the marginal velocity expression yields:
+Substituting Equations~(4) and~(5) into the marginal velocity expression~(3) gives:
 \begin{align}
 v_t(x) &= \dot{c}_t \left( \frac{x + \sigma_t^2 \nabla_x \log p_t(x)}{c_t} \right) + \dot{\sigma}_t \left( -\sigma_t \nabla_x \log p_t(x) \right) \nonumber \\
 &= \frac{\dot{c}_t}{c_t} x + \left( \frac{\dot{c}_t \sigma_t^2}{c_t} - \dot{\sigma}_t \sigma_t \right) \nabla_x \log p_t(x) \nonumber \\
-&= \frac{\dot{c}_t}{c_t} x + \sigma_t^2 \left( \frac{\dot{c}_t}{c_t} - \frac{\dot{\sigma}_t}{\sigma_t} \right) \nabla_x \log p_t(x)
+&= \frac{\dot{c}_t}{c_t} x + \sigma_t^2 \left( \frac{\dot{c}_t}{c_t} - \frac{\dot{\sigma}_t}{\sigma_t} \right) \nabla_x \log p_t(x).
 \end{align}
 
 \paragraph{Equivalence of Parameterisations.}
-Equation (6) demonstrates that the velocity field $v_t(x)$ is completely determined by the schedules $c_t, \sigma_t$ and the score function $\nabla_x \log p_t(x)$. Consequently, the following target parameterisations are equivalent up to linear transformations:
+Equation~(6) demonstrates that the velocity field $v_t(x)$ is uniquely determined by the noise schedules $c_t, \sigma_t$ and the score function $\nabla_x \log p_t(x)$. Consequently, the following target parameterisations are equivalent up to deterministic point-wise linear transformations:
 \begin{equation}
-\nabla_x \log p_t(x) \quad \iff \quad \mathbb{E}\left[\varepsilon \mid X_t = x\right] \quad \iff \quad \mathbb{E}\left[X_0 \mid X_t = x\right] \quad \iff \quad v_t(x)
+\nabla_x \log p_t(x) \quad \iff \quad \mathbb{E}\left[\varepsilon \mid X_t = x\right] \quad \iff \quad \mathbb{E}\left[X_0 \mid X_t = x\right] \quad \iff \quad v_t(x).
 \end{equation}
-Sampling via the deterministic flow ODE $\dot{x}_t = v_t(x_t)$ parameterised by a score model recovers the probability flow ODE (e.g., DDIM \citep{song2020denoising}).
+Sampling via the deterministic flow ODE $\dot{x}_t = v_t(x_t)$ parameterised by a score model recovers the probability flow ODE framework (e.g., DDIM \citep{song2020denoising}).
 
 \subsection{Tweedie's 1\textsuperscript{st} and 2\textsuperscript{nd} Order Formulae}
 
-Consider the canonical Gaussian perturbation model $X_t = X_0 + \sigma_t \varepsilon$, where $\varepsilon \sim \mathcal{N}(0, I_d)$ and $X_0 \sim p_0$. The conditional density of $X_t$ given $X_0 = x_0$ is:
+Consider the standard unscaled Gaussian perturbation model $X_t = X_0 + \sigma_t \varepsilon$, where $\varepsilon \sim \mathcal{N}(0, I_D)$ and $X_0 \sim p_0$. The conditional density of $X_t$ given $X_0 = x_0$ is:
 \begin{equation}
-p_t(x \mid x_0) = (2\pi \sigma_t^2)^{-d/2} \exp\left( -\frac{\|x - x_0\|^2}{2\sigma_t^2} \right)
+p_t(x \mid x_0) = (2\pi \sigma_t^2)^{-D/2} \exp\left( -\frac{\|x - x_0\|^2}{2\sigma_t^2} \right).
 \end{equation}
-The marginal density $p_t(x)$ is:
+The marginal density $p_t(x)$ is given by:
 \begin{equation}
-p_t(x) = \int p_t(x \mid x_0) p_0(x_0) \, dx_0
+p_t(x) = \int_{\mathbb{R}^D} p_t(x \mid x_0) p_0(x_0) \, dx_0.
 \end{equation}
 
 \subsubsection{First Derivative (Score Function)}
-Differentiating $p_t(x)$ under the integral sign:
+Differentiating $p_t(x)$ under the integral sign with respect to $x$:
 \begin{equation}
-\nabla_x p_t(x) = -\frac{1}{\sigma_t^2} \int (x - x_0) p_t(x \mid x_0) p_0(x_0) \, dx_0
+\nabla_x p_t(x) = -\frac{1}{\sigma_t^2} \int_{\mathbb{R}^D} (x - x_0) p_t(x \mid x_0) p_0(x_0) \, dx_0.
 \end{equation}
-Dividing by $p_t(x)$ and applying Bayes' rule $p(x_0 \mid x) = \frac{p_t(x \mid x_0) p_0(x_0)}{p_t(x)}$ yields Tweedie's first-order formula:
+Dividing by $p_t(x)$ and applying Bayes' rule $p(x_0 \mid x) = \frac{p_t(x \mid x_0) p_0(x_0)}{p_t(x)}$ yields Tweedie's first-order identity:
 \begin{equation}
-\nabla_x \log p_t(x) = \frac{\nabla_x p_t(x)}{p_t(x)} = \frac{\mathbb{E}[X_0 \mid X_t = x] - x}{\sigma_t^2}
+\nabla_x \log p_t(x) = \frac{\nabla_x p_t(x)}{p_t(x)} = \frac{\mathbb{E}[X_0 \mid X_t = x] - x}{\sigma_t^2}.
 \end{equation}
 
-\subsubsection{Second Derivative (Hessian Matrix/Score Jacobian)}
+\subsubsection{Second Derivative (Hessian Matrix / Score Jacobian)}
 Expanding the Hessian matrix of the log-marginal density:
 \begin{equation}
-\nabla_x^2 \log p_t(x) = \frac{\nabla_x^2 p_t(x)}{p_t(x)} - \left( \nabla_x \log p_t(x) \right) \left( \nabla_x \log p_t(x) \right)^T
+\nabla_x^2 \log p_t(x) = \frac{\nabla_x^2 p_t(x)}{p_t(x)} - \left( \nabla_x \log p_t(x) \right) \left( \nabla_x \log p_t(x) \right)^T.
 \end{equation}
-Differentiating $\nabla_x p_t(x)$ a second time:
+Differentiating $\nabla_x p_t(x)$ a second time yields:
 \begin{equation}
-\nabla_x^2 p_t(x) = \int \left( -\frac{1}{\sigma_t^2} I_d + \frac{(x - x_0)(x - x_0)^T}{\sigma_t^4} \right) p_t(x \mid x_0) p_0(x_0) \, dx_0
+\nabla_x^2 p_t(x) = \int_{\mathbb{R}^D} \left( -\frac{1}{\sigma_t^2} I_D + \frac{(x - x_0)(x - x_0)^T}{\sigma_t^4} \right) p_t(x \mid x_0) p_0(x_0) \, dx_0.
 \end{equation}
 Dividing by $p_t(x)$:
 \begin{equation}
-\frac{\nabla_x^2 p_t(x)}{p_t(x)} = -\frac{1}{\sigma_t^2} I_d + \frac{1}{\sigma_t^4} \mathbb{E}\left[(x - X_0)(x - X_0)^T \mid X_t = x\right]
+\frac{\nabla_x^2 p_t(x)}{p_t(x)} = -\frac{1}{\sigma_t^2} I_D + \frac{1}{\sigma_t^4} \mathbb{E}\left[(x - X_0)(x - X_0)^T \mid X_t = x\right].
 \end{equation}
 
 \subsubsection{Posterior Covariance Relation}
-Substituting (11) and (14) into (12):
+Substituting Equations~(11) and~(14) into Equation~(12):
 \begin{align}
-\nabla_x^2 \log p_t(x) &= -\frac{1}{\sigma_t^2} I_d + \frac{1}{\sigma_t^4} \Big( \mathbb{E}\left[(x - X_0)(x - X_0)^T \mid X_t = x\right] \nonumber \\
-&\quad - \mathbb{E}\left[x - X_0 \mid X_t = x\right] \mathbb{E}\left[x - X_0 \mid X_t = x\right]^T \Big)
+\nabla_x^2 \log p_t(x) &= -\frac{1}{\sigma_t^2} I_D + \frac{1}{\sigma_t^4} \Big( \mathbb{E}\left[(x - X_0)(x - X_0)^T \mid X_t = x\right] \nonumber \\
+&\quad - \mathbb{E}\left[x - X_0 \mid X_t = x\right] \mathbb{E}\left[x - X_0 \mid X_t = x\right]^T \Big).
 \end{align}
-Since $x$ is non-random given $X_t = x$, the bracketed term is the conditional covariance $\operatorname{Cov}(X_0 \mid X_t = x)$. Thus, Tweedie's second-order formula simplifies to:
+Because $x$ is deterministic given $X_t = x$, the bracketed term reduces to the conditional posterior covariance $\operatorname{Cov}(X_0 \mid X_t = x)$. Thus, Tweedie's second-order formula simplifies to:
 \begin{equation}
-\nabla_x^2 \log p_t(x) = \frac{1}{\sigma_t^4} \operatorname{Cov}(X_0 \mid X_t = x) - \frac{1}{\sigma_t^2} I_d
+\nabla_x^2 \log p_t(x) = \frac{1}{\sigma_t^4} \operatorname{Cov}(X_0 \mid X_t = x) - \frac{1}{\sigma_t^2} I_D.
 \end{equation}
-
-This identity will be used later in \autoref{sec:pcf}.
-
-
 \newpage
 
 \section{Anisotropic Stability Bound}
 \label{sec:aniso_stab_bound}
 
-We record a stability estimate for generator matching that keeps track of
-\emph{which} directions of a drift error are amplified and which are dampened. 
-The scalar one-sided Lipschitz estimate propagates every error with a single
-worst-case rate, thereby being sharp only in an isotropic sense. The estimate below
-replaces that scalar rate by the derivative flow of the learnt dynamics, a matrix that sees the direction of the error.
-\subsection{The deterministic transport mechanism}
+We record a stability estimate for generator matching that tracks \emph{which} directions of a drift error are amplified and which are dampened. The scalar one-sided Lipschitz estimate propagates every error with a single worst-case rate, making it sharp only in an isotropic sense. The estimate below replaces that scalar rate with the derivative flow of the learned dynamics.
+
+\subsection{The Deterministic Transport Mechanism}
 \label{subsec:mechanism}
 
-Consider two time-dependent velocity fields $v_t,\hat v_t:\R^D\to\R^D$ for
-$0\le t\le T$, smooth enough in space and integrable in time that their
-characteristic flows are globally defined and differentiable in the initial
-condition:
+Consider two time-dependent velocity fields $v_t, \hat{v}_t : \R^D \to \R^D$ for $0 \le t \le T$, smooth enough in space and integrable in time such that their characteristic flows are globally defined and differentiable with respect to the initial condition:
 \begin{equation}
-  \tfrac{\dd}{\dd s}\Phi_{t,s}(x)=v_s\big(\Phi_{t,s}(x)\big),
+  \tfrac{\dd}{\dd s}\Phi_{t,s}(x) = v_s\big(\Phi_{t,s}(x)\big),
   \qquad
-  \tfrac{\dd}{\dd s}\hat\Phi_{t,s}(x)=\hat v_s\big(\hat\Phi_{t,s}(x)\big),
+  \tfrac{\dd}{\dd s}\hat{\Phi}_{t,s}(x) = \hat{v}_s\big(\hat{\Phi}_{t,s}(x)\big),
   \qquad
-  \Phi_{t,t}=\hat\Phi_{t,t}=\Id .
+  \Phi_{t,t} = \hat{\Phi}_{t,t} = \Id.
   \label{eq:flows}
 \end{equation}
-We write $\delta v_t:=v_t-\hat v_t$ for the velocity error and let $v_t$ be
-the exact field and $\hat v_t$ the learnt one.
+We write $\delta v_t := v_t - \hat{v}_t$ for the velocity error, where $v_t$ represents the exact field and $\hat{v}_t$ the learned field.
 
-The estimate is built entirely from the derivative of the \emph{learnt} flow, which is availible to us from its network,
+The estimate is constructed using the derivative of the \emph{learned} flow, which is accessible directly from its neural network architecture:
 \begin{equation}
-  \hat J_{t,T}(x):=D_x\hat\Phi_{t,T}(x),
+  \hat{J}_{t,T}(x) := D_x\hat{\Phi}_{t,T}(x),
   \qquad
-  \tfrac{\dd}{\dd s}\hat J_{t,s}(x)=\nabla\hat v_s\big(\hat\Phi_{t,s}(x)\big)\,
-  \hat J_{t,s}(x),
-  \quad \hat J_{t,t}(x)=\Id .
+  \tfrac{\dd}{\dd s}\hat{J}_{t,s}(x) = \nabla\hat{v}_s\big(\hat{\Phi}_{t,s}(x)\big)\,\hat{J}_{t,s}(x),
+  \qquad 
+  \hat{J}_{t,t}(x) = \Id.
   \label{eq:jacobian-ode}
 \end{equation}
-Thus $\hat J_{t,T}(x)h$ is the terminal displacement at time $T$ produced by an
-infinitesimal perturbation $h$ applied at $(t,x)$ and transported by the learnt
-dynamics. An error at time $t$ is not scaled by a worst-case constant but carried by
-$\hat J_{t,T}$ along its own direction. The following identity makes this exact.
+Thus, $\hat{J}_{t,T}(x)h$ denotes the terminal displacement at time $T$ produced by an infinitesimal perturbation $h$ applied at $(t,x)$ and transported by the learned dynamics. An error at time $t$ is not rescaled by a uniform worst-case constant; rather, it is carried along its specific direction by $\hat{J}_{t,T}$. The following identity formalizes this mechanism.
 
 \begin{lemma}[Telescoping identity along characteristics]
 \label{lem:telescope}
-For every initial point $x_0\in\R^D$, with $X_t:=\Phi_{0,t}(x_0)$ the exact
-characteristic,
+For every initial point $x_0 \in \R^D$, let $X_t := \Phi_{0,t}(x_0)$ denote the exact characteristic trajectory. Then,
 \begin{equation}
-  \Phi_{0,T}(x_0)-\hat\Phi_{0,T}(x_0)
-  =\int_0^T \hat J_{t,T}(X_t)\,\delta v_t(X_t)\dd t .
+  \Phi_{0,T}(x_0) - \hat{\Phi}_{0,T}(x_0)
+  = \int_0^T \hat{J}_{t,T}(X_t)\,\delta v_t(X_t) \dd t.
   \label{eq:telescope}
 \end{equation}
 \end{lemma}
 
 \begin{proof}
-Define $F(t):=\hat\Phi_{t,T}(X_t)$, which follows the exact dynamics up to time
-$t$ and the learnt dynamics from $t$ to $T$. Its endpoints are the fully learnt
-and fully exact terminal points, $F(0)=\hat\Phi_{0,T}(x_0)$ and
-$F(T)=\Phi_{0,T}(x_0)$. Differentiating in $t$,
+Define $F(t) := \hat{\Phi}_{t,T}(X_t)$, which tracks the exact dynamics up to time $t$ and transitions to the learned dynamics from $t$ to $T$. Its boundary values represent the fully learned and fully exact terminal points: $F(0) = \hat{\Phi}_{0,T}(x_0)$ and $F(T) = \Phi_{0,T}(x_0)$. Differentiating $F(t)$ with respect to $t$ yields:
 \[
   \tfrac{\dd}{\dd t}F(t)
-  =\partial_t\hat\Phi_{t,T}(X_t)+D\hat\Phi_{t,T}(X_t)\,\dot X_t .
+  = \partial_t\hat{\Phi}_{t,T}(X_t) + D\hat{\Phi}_{t,T}(X_t)\,\dot{X}_t.
 \]
-By starting the learnt flow an instant later we remove one short learnt step, so
-$\partial_t\hat\Phi_{t,T}(x)=-D\hat\Phi_{t,T}(x)\,\hat v_t(x)$. Together with
-$\dot X_t=v_t(X_t)$ and $D\hat\Phi_{t,T}(X_t)=\hat J_{t,T}(X_t)$ this gives
+By initiating the learned flow an instant later, we eliminate a infinitesimal learned step, giving $\partial_t\hat{\Phi}_{t,T}(x) = -D\hat{\Phi}_{t,T}(x)\,\hat{v}_t(x)$. Combining this with $\dot{X}_t = v_t(X_t)$ and $D\hat{\Phi}_{t,T}(X_t) = \hat{J}_{t,T}(X_t)$, we obtain:
 \[
   \tfrac{\dd}{\dd t}F(t)
-  =\hat J_{t,T}(X_t)\big(v_t(X_t)-\hat v_t(X_t)\big)
-  =\hat J_{t,T}(X_t)\,\delta v_t(X_t).
+  = \hat{J}_{t,T}(X_t)\big(v_t(X_t) - \hat{v}_t(X_t)\big)
+  = \hat{J}_{t,T}(X_t)\,\delta v_t(X_t).
 \]
-Integrating $F(T)-F(0)$ from $0$ to $T$ yields \eqref{eq:telescope}.
+Integrating $\tfrac{\dd}{\dd t}F(t)$ from $t=0$ to $t=T$ proves \eqref{eq:telescope}.
 \end{proof}
 
-Identity~\eqref{eq:telescope} highlights that the error made at each time enters the terminal gap through the derivative flow evaluated in the actual direction of that error, with no worst-case constant and no loss. 
+Identity~\eqref{eq:telescope} shows that the local velocity error at each instant enters the terminal gap through the derivative flow evaluated precisely along the actual error direction, avoiding worst-case scalar overestimation.
 
-\subsection{From the telescoping identity to the matrix bound}
+\subsection{From the Telescoping Identity to the Matrix Bound}
 \label{subsec:matrix}
 
-We turn the path-wise identity into a bound on the terminal laws by coupling.
-Let $X_0\sim\rho_0$ and transport it by both flows,
-$X_t:=\Phi_{0,t}(X_0)$ and $\hat X_t:=\hat\Phi_{0,t}(X_0)$, with terminal laws
-$\rho_T:=\mathrm{Law}(X_T)$ and $\hat\rho_T:=\mathrm{Law}(\hat X_T)$. Running both
-flows from the same $X_0$ is a coupling of $\rho_T$ and $\hat\rho_T$, so
-$W_1(\rho_T,\hat\rho_T)\le\E\|X_T-\hat X_T\|$. Applying
-Lemma~\ref{lem:telescope} path-wise at $x_0=X_0$ and the triangle inequality,
+We now convert this pathwise identity into a bound on the target probability measures via optimal transport coupling. Let $X_0 \sim \rho_0$ and transport it using both velocity fields: $X_t := \Phi_{0,t}(X_0)$ and $\hat{X}_t := \hat{\Phi}_{0,t}(X_0)$, yielding terminal laws $\rho_T := \Law(X_T)$ and $\hat{\rho}_T := \Law(\hat{X}_T)$. Driving both flows from the same random seed $X_0$ forms a valid coupling between $\rho_T$ and $\hat{\rho}_T$, giving $W_1(\rho_T,\hat{\rho}_T) \le \E\|X_T - \hat{X}_T\|$. Applying Lemma~\ref{lem:telescope} pathwise at $x_0 = X_0$ alongside the integral triangle inequality yields:
 \begin{equation}
-  W_1(\rho_T,\hat\rho_T)
-  \le\int_0^T\E\big\|\hat J_{t,T}(X_t)\,\delta v_t(X_t)\big\|\dd t
-  =\int_0^T\!\!\int_{\R^D}\big\|\hat J_{t,T}(x)\,\delta v_t(x)\big\|
-  \,\rho_t(\dd x)\dd t ,
+  W_1(\rho_T,\hat{\rho}_T)
+  \le \int_0^T \E\big\|\hat{J}_{t,T}(X_t)\,\delta v_t(X_t)\big\| \dd t
+  = \int_0^T \int_{\R^D} \big\|\hat{J}_{t,T}(x)\,\delta v_t(x)\big\| \, \rho_t(\dd x) \dd t,
   \label{eq:coupling-bound}
 \end{equation}
-where the last step uses $X_t\sim\rho_t$. It remains only to name the quadratic
-form hidden in the norm.
+where the final equality follows from $X_t \sim \rho_t$. It remains to express the matrix norm via its underlying quadratic form.
 
 \begin{theorem}[Anisotropic $W_1$ stability]
 \label{thm:matrix}
-Define the pullback amplification metric
+Define the pullback amplification metric tensor:
 \begin{equation}
-  G_{t,T}(x):=\hat J_{t,T}(x)^{\!\top}\hat J_{t,T}(x),
-  \qquad\text{so that}\qquad
-  \|\hat J_{t,T}(x)h\|^2=\big\langle h,\,G_{t,T}(x)\,h\big\rangle .
+  G_{t,T}(x) := \hat{J}_{t,T}(x)^\top \hat{J}_{t,T}(x),
+  \qquad \text{such that} \qquad
+  \|\hat{J}_{t,T}(x)h\|^2 = \big\langle h,\, G_{t,T}(x)\, h \big\rangle.
   \label{eq:pullback}
 \end{equation}
-Then
+Then the Wasserstein distance satisfies:
 \begin{equation}
-  W_1(\rho_T,\hat\rho_T)
-  \le\int_0^T\!\!\int_{\R^D}
-  \big\langle \delta v_t(x),\,G_{t,T}(x)\,\delta v_t(x)\big\rangle^{1/2}
-  \,\rho_t(\dd x)\dd t .
+  W_1(\rho_T,\hat{\rho}_T)
+  \le \int_0^T \int_{\R^D}
+  \big\langle \delta v_t(x),\, G_{t,T}(x)\, \delta v_t(x) \big\rangle^{1/2}
+  \, \rho_t(\dd x) \dd t.
   \label{eq:matrix-bound}
 \end{equation}
 \end{theorem}
 
 \begin{proof}
-Substitute the identity in \eqref{eq:pullback} into \eqref{eq:coupling-bound}.
+Substituting the norm identity \eqref{eq:pullback} directly into \eqref{eq:coupling-bound} completes the proof.
 \end{proof}
 
-The matrix $G_{t,T}(x)$ is the Euclidean metric at the terminal time pulled back
-to the tangent space at $(t,x)$ by the learnt flow; it lives at time $t$ but
-measures squared lengths after transport to $T$. Its eigenvectors are the input
-directions at $(t,x)$ and its eigenvalues are the squared stretching factors of
-those directions. The bound \eqref{eq:matrix-bound} is anisotropic
-precisely because it evaluates $G_{t,T}$ on the actual error direction
-$\delta v_t(x)$ rather than on the worst possible direction.
+The matrix $G_{t,T}(x)$ represents the standard Euclidean metric at terminal time $T$ pulled back to the tangent space at $(t,x)$ via the learned flow. It operates at time $t$ while measuring vector magnitudes following transport to time $T$. Its eigenvectors identify principal directionalities at $(t,x)$, and its eigenvalues correspond to squared directional stretching factors. Bound~\eqref{eq:matrix-bound} is anisotropic because it explicitly evaluates $G_{t,T}$ along the error vector $\delta v_t(x)$ rather than maximising over all directions.
 
-\subsection{Recovering the one-sided Lipschitz estimate}
+\subsection{Recovering the One-Sided Lipschitz Estimate}
 \label{subsec:scalar}
 
-The classical scalar estimate is the isotropic specialisation of
-Theorem~\ref{thm:matrix}, obtained by discarding the direction of the error.
-Let $S_t(x):=\tfrac12\big(\nabla\hat v_t(x)+\nabla\hat v_t(x)^{\!\top}\big)$ be the
-symmetric part of the learnt Jacobian, and suppose the learnt field is one-sided
-Lipschitz with rate $\ell_t$, meaning
+The classical scalar stability estimate represents the isotropic limit of Theorem~\ref{thm:matrix}, obtained by discarding directional information. Let $S_t(x) := \tfrac12\big(\nabla\hat{v}_t(x) + \nabla\hat{v}_t(x)^\top\big)$ be the symmetric Jacobian component. Assume the learned field is one-sided Lipschitz with rate $\ell_t$, namely:
 \begin{equation}
-  \lambda_{\max}\big(S_t(x)\big)\le\ell_t
-  \qquad\text{for all }x .
+  \lammax\big(S_t(x)\big) \le \ell_t
+  \qquad \text{for all } x \in \R^D.
   \label{eq:osl}
 \end{equation}
-The condition constrains expansion by only bounding the largest rate at which two trajectories separate, and places no bound on contraction or on the rotational
-part of $\nabla\hat v_t$.
+This condition restricts directional expansion by capping the maximum separation rate between trajectories, without constraining local contractions or rotational shearing in $\nabla\hat{v}_t$.
 
 \begin{corollary}[Scalar one-sided Lipschitz bound]
 \label{cor:scalar}
-Under \eqref{eq:osl},
+Under assumption \eqref{eq:osl},
 \begin{equation}
-  G_{t,T}(x)\ \preceq\ \exp\!\Big(2\!\int_t^T\ell_s\dd s\Big)\,\Id ,
+  G_{t,T}(x) \preceq \exp\!\left(2\int_t^T \ell_s \dd s\right) \Id,
   \label{eq:loewner}
 \end{equation}
-and consequently
+which implies the scalar stability bound:
 \begin{equation}
-  W_1(\rho_T,\hat\rho_T)
-  \le\int_0^T\exp\!\Big(\int_t^T\ell_s\dd s\Big)\,
-  \|\delta v_t\|_{L^1(\rho_t)}\dd t .
+  W_1(\rho_T,\hat{\rho}_T)
+  \le \int_0^T \exp\!\left(\int_t^T \ell_s \dd s\right)
+  \|\delta v_t\|_{L^1(\rho_t)} \dd t.
   \label{eq:scalar-bound}
 \end{equation}
 \end{corollary}
 
 \begin{proof}
-Fix a direction $h$ and set $z_s:=\hat J_{t,s}(x)h$, which solves
-$\dot z_s=\nabla\hat v_s(\hat\Phi_{t,s}(x))\,z_s$ by \eqref{eq:jacobian-ode}.
-Only the symmetric part contributes to the growth of the norm, so
+Fix a direction vector $h$ and set $z_s := \hat{J}_{t,s}(x)h$, which satisfies $\dot{z}_s = \nabla\hat{v}_s(\hat{\Phi}_{t,s}(x)) z_s$ according to \eqref{eq:jacobian-ode}. Only the symmetric Jacobian component drives norm growth:
 \[
   \tfrac{\dd}{\dd s}\|z_s\|^2
-  =2\big\langle z_s,\,S_s(\hat\Phi_{t,s}(x))\,z_s\big\rangle
-  \le 2\ell_s\|z_s\|^2 .
+  = 2\big\langle z_s,\, S_s(\hat{\Phi}_{t,s}(x)) z_s \big\rangle
+  \le 2\ell_s \|z_s\|^2.
 \]
-Gr\"onwall's lemma gives
-$\|\hat J_{t,T}(x)h\|\le\exp\!\big(\int_t^T\ell_s\dd s\big)\|h\|$, which is
-\eqref{eq:loewner}. Inserting \eqref{eq:loewner} into \eqref{eq:matrix-bound}
-and using $\langle\delta v_t,G_{t,T}\delta v_t\rangle^{1/2}\le
-\exp(\int_t^T\ell_s\dd s)\|\delta v_t\|$ yields \eqref{eq:scalar-bound}.
+Applying Grönwall's inequality yields $\|\hat{J}_{t,T}(x)h\| \le \exp\!\left(\int_t^T \ell_s \dd s\right)\|h\|$, establishing matrix inequality \eqref{eq:loewner}. Substituting \eqref{eq:loewner} into \eqref{eq:matrix-bound} and using $\langle \delta v_t, G_{t,T} \delta v_t \rangle^{1/2} \le \exp\!\left(\int_t^T \ell_s \dd s\right) \|\delta v_t\|$ concludes the proof.
 \end{proof}
 
-Corollary~\ref{cor:scalar} exhibits the scalar estimate as the Loewner
-domination \eqref{eq:loewner}: the matrix $G_{t,T}$ is replaced by its largest
-eigenvalue, uniformly over directions. While bound is correct, it does not make use of the
-eigenstructure of $G_{t,T}$, and in particular treats a strongly contracted error direction as though it were the most expansive one. The gap between the scalar and anisotropic bounds can be exacerbated when errors lie mostly in the normal direction to a target manifold, as we will see.
+Corollary~\ref{cor:scalar} illustrates that the scalar estimate relies on the Loewner order bound \eqref{eq:loewner}: $G_{t,T}$ is uniformly dominated by its largest eigenvalue across all directions. While this bound holds generally, it ignores the eigenstructure of $G_{t,T}$, treating strongly contracting error directions identically to maximal expansion directions. This overestimation is especially pronounced when velocity errors lie normal to a low-dimensional target manifold.
 
-
-
-\subsection{A two-direction picture}
+\subsection{A Two-Direction Model}
 \label{subsec:two-direction}
- 
-The gap between the matrix and scalar bounds is already visible in the simplest
-anisotropic model. Fix an orthogonal splitting $\R^D=E_\parallel\oplus E_\perp$
-into a tangent-like block and a normal-like block, write $x=(x_\parallel,x_\perp)$
-accordingly, and take the learnt velocity to be linear, block-diagonal,
-expansive on $E_\parallel$ and contractive on $E_\perp$:
+
+The gap between matrix and scalar estimates can be observed in a simple two-direction model. Consider an orthogonal decomposition $\R^D = E_\parallel \oplus E_\perp$ into tangent-like and normal-like subspaces. Writing $x = (x_\parallel, x_\perp)$, assume a linear, block-diagonal learned velocity field that expands along $E_\parallel$ and contracts along $E_\perp$:
 \begin{equation}
-  \hat v_t(x_\parallel,x_\perp)=\big(\ell_t x_\parallel,\ -\gamma_t x_\perp\big),
-  \qquad \gamma_t\ge 0.
+  \hat{v}_t(x_\parallel, x_\perp) = \big(\ell_t x_\parallel, \, -\gamma_t x_\perp\big),
+  \qquad \gamma_t \ge 0.
   \label{eq:block-field}
 \end{equation}
-Its Jacobian $\nabla\hat v_t=\mathrm{diag}(\ell_t I_\parallel,-\gamma_t I_\perp)$
-is constant in space, so the derivative flow \eqref{eq:jacobian-ode} integrates
-block-wise and the pullback metric \eqref{eq:pullback} is diagonal:
+Its Spatial Jacobian $\nabla\hat{v}_t = \mathrm{diag}(\ell_t I_\parallel, -\gamma_t I_\perp)$ is constant in space. Consequently, derivative ODE \eqref{eq:jacobian-ode} integrates blockwise, yielding diagonal expressions for $\hat{J}_{t,T}$ and $G_{t,T}$:
 \begin{equation}
-  \hat J_{t,T}=
+  \hat{J}_{t,T} =
   \begin{pmatrix}
-    e^{\int_t^T\ell_s\dd s}\,I_\parallel & 0\\[2pt]
-    0 & e^{-\int_t^T\gamma_s\dd s}\,I_\perp
+    e^{\int_t^T \ell_s \dd s} I_\parallel & 0 \\[2pt]
+    0 & e^{-\int_t^T \gamma_s \dd s} I_\perp
   \end{pmatrix},
   \qquad
-  G_{t,T}=
+  G_{t,T} =
   \begin{pmatrix}
-    e^{2\int_t^T\ell_s\dd s}\,I_\parallel & 0\\[2pt]
-    0 & e^{-2\int_t^T\gamma_s\dd s}\,I_\perp
+    e^{2\int_t^T \ell_s \dd s} I_\parallel & 0 \\[2pt]
+    0 & e^{-2\int_t^T \gamma_s \dd s} I_\perp
   \end{pmatrix}.
   \label{eq:block-G}
 \end{equation}
-Splitting the error as $\delta v_t=\delta v_t^\parallel+\delta v_t^\perp$ with
-$\delta v_t^\parallel\in E_\parallel$ and $\delta v_t^\perp\in E_\perp$, the
-integrand of the matrix bound \eqref{eq:matrix-bound} separates,
+Decomposing the drift error as $\delta v_t = \delta v_t^\parallel + \delta v_t^\perp$ with $\delta v_t^\parallel \in E_\parallel$ and $\delta v_t^\perp \in E_\perp$, the matrix bound integrand in \eqref{eq:matrix-bound} separates into:
 \begin{equation}
-  \big\langle\delta v_t,\,G_{t,T}\,\delta v_t\big\rangle^{1/2}
-  =\Big(e^{2\int_t^T\ell_s\dd s}\,\|\delta v_t^\parallel\|^2
-       +e^{-2\int_t^T\gamma_s\dd s}\,\|\delta v_t^\perp\|^2\Big)^{1/2}.
+  \big\langle \delta v_t,\, G_{t,T}\, \delta v_t \big\rangle^{1/2}
+  = \left(e^{2\int_t^T \ell_s \dd s} \|\delta v_t^\parallel\|^2
+       + e^{-2\int_t^T \gamma_s \dd s} \|\delta v_t^\perp\|^2\right)^{1/2}.
   \label{eq:block-integrand}
 \end{equation}
-A tangent error is carried to the terminal time by the expansion factor
-$e^{\int_t^T\ell}$; a normal error is carried by the contraction factor
-$e^{-\int_t^T\gamma}$ and is therefore damped.
- 
-The scalar estimate cannot distinguish the two. Its rate is the largest
-eigenvalue of the symmetric Jacobian,
+Tangential errors are propagated to terminal time via expansion factor $e^{\int_t^T \ell}$, whereas normal errors are suppressed by decay factor $e^{-\int_t^T \gamma}$.
+
+The scalar estimate cannot separate these components. Its expansion rate corresponds to the maximum eigenvalue of the symmetric Jacobian:
 \begin{equation}
-  \lambda_{\max}\big(S_t\big)=\max\{\ell_t,\,-\gamma_t\}=\ell_t
-  \qquad(\ell_t\ge 0),
+  \lammax\big(S_t\big) = \max\{\ell_t, \, -\gamma_t\} = \ell_t
+  \qquad (\ell_t \ge 0),
   \label{eq:block-scalar-rate}
 \end{equation}
-so Corollary~\ref{cor:scalar} propagates \emph{both} error components with the
-tangent expansion factor $e^{\int_t^T\ell}$. It replaces the normal contraction
-$e^{-\int_t^T\gamma}$ by expansion, overestimating the contribution of a normal
-error by the factor $e^{\int_t^T(\ell_s+\gamma_s)\dd s}$. When the normal block
-is strongly contracting (which is the case near a terminal manifold, where
-$\gamma_t\sim(T-t)^{-1}$ and $e^{-\int_t^T\gamma}$ decays polynomially in
-$T-t$) this overestimate is the difference between a persistent error
-and a damped one.
- 
-\subsection{What the estimate requires of the error}
-\label{subsec:direction}
- 
-The two bounds depend on the error through different amounts of information, and
-this raises a natural objection. The scalar bound \eqref{eq:scalar-bound} uses
-only the magnitude $\|\delta v_t\|_{L^1(\rho_t)}$. The matrix bound
-\eqref{eq:matrix-bound} uses the quadratic form
-$\langle\delta v_t,G_{t,T}\delta v_t\rangle$, that is, the direction of
-$\delta v_t$ relative to the eigenframe of $G_{t,T}$. Since the exact field
-$v_t$ is unknown, the error $\delta v_t=v_t-\hat v_t$ is never observed, and its
-direction even less so. Therefore, we conclude that this matrix bound, while tighter, is not any more practical than the scalar bound. 
+forcing Corollary~\ref{cor:scalar} to propagate \emph{both} error components using the tangential expansion factor $e^{\int_t^T \ell}$. By replacing normal contraction $e^{-\int_t^T \gamma}$ with expansion, it overestimates normal error contributions by a factor of $e^{\int_t^T (\ell_s + \gamma_s) \dd s}$. In regimes near target manifolds where contraction is strong ($\gamma_t \sim (T-t)^{-1}$, making $e^{-\int_t^T \gamma}$ decay polynomially in $T-t$), this overestimate creates the illusion of persistent error accumulation where damping actually occurs.
 
-Despite observing that $\delta v_t$ was usually aligned with $v_t$, and that in different instances of training  $\delta v_t$ seemed to be Gaussian, not distributional behaviour of $\delta v_t$ was understood.
- 
- 
-One assumption is that the projectors
-defining the frame ($P_t$ onto the tangent block and $Q_t=I-P_t$ onto the normal block) must be a single field, determined by the target and shared across all learnt fields. Re-deriving the frame from each model's own error would reintroduce model dependence into the weights and make comparisons between models meaningless. We therefore fix $P_t$ once, from the target density geometry, and read every error in that frame. So $P_t$ is built from the spectrum of the posterior-covariance operator $A_t$ in \autoref{sec:pcf}.
+\subsection{Structural Requirements on the Drift Error}
+\label{subsec:direction}
+
+The matrix and scalar bounds require different levels of information about the velocity error. The scalar estimate \eqref{eq:scalar-bound} depends only on the spatial norm $\|\delta v_t\|_{L^1(\rho_t)}$. Conversely, the matrix bound \eqref{eq:matrix-bound} depends on the directional quadratic form $\langle \delta v_t, G_{t,T} \delta v_t \rangle$, requiring knowledge of the orientation of $\delta v_t$ relative to the eigenframe of $G_{t,T}$. Because the ground-truth velocity $v_t$ is unknown in practice, $\delta v_t = v_t - \hat{v}_t$ cannot be directly evaluated.
+
+Although empirical observations suggest that $\delta v_t$ often aligns with $v_t$ or exhibits Gaussian fluctuations across random training runs, the statistical behavior of $\delta v_t$ is generally unknown prior to training.
+
+To construct a practical coordinate system, we define fixed projection operators ($P_t$ onto the tangential subspace and $Q_t = I - P_t$ onto the normal subspace) generated exclusively by the geometry of the target distribution. Re-estimating the eigenframe for each learned model individually would introduce model-dependent weights and complicate comparative evaluations. Therefore, we fix $P_t$ once using the target density geometry, measuring all model errors within this single benchmark frame. The projection $P_t$ is derived directly from the spectral decomposition of the posterior-covariance operator $A_t$ detailed in \autoref{sec:pcf}.
+
 
 \newpage
-
 
 \section{Level Sets}
 \label{sec:level_sets}
 
- As we smooth data which lies on (or is concentrated around) a manifold two main affects occur: smoothing in the normal direction, and smoothing and tangent direction. Smoothing in the tangent direction makes a density more uniform along a manifold, therefore our level sets should be better behaved. Here we investigate how level sets evolve.
+As we smooth data lying on (or concentrated around) a manifold, two main effects occur: smoothing in the normal direction and smoothing in the tangent direction. Smoothing in the tangent direction makes a density more uniform along the manifold, leading to better-behaved level sets. Here, we investigate how these level sets evolve under smoothing.
 
-Let $p^\star : \mathbb{R}^D \to \mathbb{R}_+$ denote the initial density, and let
-$p_{\sigma}$ denote its Gaussian-smoothed version,
+Let $p^\star : \R^D \to \R_+$ denote the initial density, and let $p_{\sigma}$ denote its Gaussian-smoothed counterpart:
 \begin{equation}
     p_{\sigma}(x)
     =
@@ -559,15 +485,15 @@ $p_{\sigma}$ denote its Gaussian-smoothed version,
 \end{equation}
 For a regular value $c$, the corresponding level set is
 \begin{equation}
-    \mathcal{M}_c^\sigma
+    \M_c^\sigma
     :=
-    \left\{x \in \mathbb{R}^D : p_{\sigma}(x)=c\right\},
+    \left\{x \in \R^D : p_{\sigma}(x) = c\right\},
     \qquad
-    \nabla p_{\sigma}(x)\neq 0
+    \nabla p_{\sigma}(x) \neq 0
     \quad
-    \text{for }x\in\mathcal{M}_c^\sigma.
+    \text{for } x \in \M_c^\sigma.
 \end{equation}
-The unit normal to $\mathcal{M}_c^\sigma$ is
+The unit normal vector field to $\M_c^\sigma$ is
 \begin{equation}
     n(x)
     =
@@ -575,13 +501,12 @@ The unit normal to $\mathcal{M}_c^\sigma$ is
     {\|\nabla p_{\sigma}(x)\|}.
 \end{equation}
 
-For a tangent direction $v \in T_x\mathcal{M}_c^\sigma$, the derivative of the
-normal is
+For a tangent vector $v \in T_x\M_c^\sigma$, the directional derivative of the unit normal is
 \begin{equation}
     D_v n
     =
     \frac{1}{\|\nabla p_{\sigma}\|}
-    \left(I-nn^\top\right)
+    \left(\Id - n n^\top\right)
     D^2 p_{\sigma}\,v
     =
     \frac{1}{\|\nabla p_{\sigma}\|}
@@ -590,14 +515,11 @@ normal is
 \end{equation}
 where
 \begin{equation}
-    P_T := I-nn^\top
+    P_T := \Id - n n^\top
 \end{equation}
-is the orthogonal projection onto the tangent space
-$T_x\mathcal{M}_c^\sigma$. Thus, the variation of the normal field, and hence
-the local curvature of the level set, is determined by the Hessian of the density.
+denotes the orthogonal projection onto the tangent space $T_x\M_c^\sigma$. Thus, the variation of the normal vector field—and consequently the local curvature of the level set—is determined by the Hessian of the smoothed density.
 
-Gaussian smoothing regularises not only the density itself, but all of its
-spatial derivatives. In particular, for any $k\geq 0$,
+Gaussian smoothing regularizes not only the density itself, but all of its spatial derivatives. In particular, for any $k \geq 0$,
 \begin{equation}
     D^k p_{\sigma}
     =
@@ -606,11 +528,9 @@ spatial derivatives. In particular, for any $k\geq 0$,
     (D^k G_{\sigma}) * p^\star.
     \label{eq:derivative-smoothing}
 \end{equation}
-Hence increasing $\sigma$ smooths the density and simultaneously suppresses
-fine-scale variation in its gradient, Hessian, and higher-order derivatives.
+Hence, increasing $\sigma$ smooths the density while simultaneously suppressing fine-scale variations in its gradient, Hessian, and higher-order derivatives.
 
-This smoothing has a particularly simple interpretation in the Fourier
-domain. Writing $\widehat{p}_{\sigma}$ for the Fourier transform,
+This smoothing has a straightforward interpretation in the Fourier domain. Let $\widehat{p}_{\sigma}$ denote the Fourier transform:
 \begin{equation}
     \widehat{p}_{\sigma}(\xi)
     =
@@ -621,68 +541,40 @@ domain. Writing $\widehat{p}_{\sigma}$ for the Fourier transform,
     \widehat{p^\star}(\xi).
     \label{eq:fourier-smoothing}
 \end{equation}
-Thus a Fourier mode of spatial frequency $\|\xi\|$ is attenuated by
-$\exp(-\sigma^2\|\xi\|^2/2)$. High-frequency components decay quadratically faster in frequency. Consequently, Gaussian smoothing preferentially removes the fine-scale spatial variation of $p^\star$.
+A Fourier mode of spatial frequency $\|\xi\|$ is attenuated by $\exp(-\sigma^2\|\xi\|^2/2)$. Because high-frequency components decay exponentially with $\|\xi\|^2$, Gaussian smoothing preferentially eliminates the fine-scale spatial variations of $p^\star$.
 
-The effect on the geometry of a level set follows directly from
-\eqref{eq:normal-derivative}. Its shape operator is
+The effect on the geometry of a level set follows directly from \eqref{eq:normal-derivative}. Up to a choice of orientation for the normal vector, its shape operator is
 \begin{equation}
     S
     :=
-    -P_T Dn P_T
+    -P_T D n P_T
     =
     -\frac{1}{\|\nabla p_{\sigma}\|}
-    P_T D^2p_{\sigma} P_T,
+    P_T D^2 p_{\sigma} P_T.
     \label{eq:shape-operator}
 \end{equation}
-up to the choice of orientation for the normal. The eigenvalues of $S$ are
-the principal curvatures of $\mathcal{M}_c^\sigma$. Therefore, Gaussian
-smoothing affects the shape of the level set through two quantities:
-the Hessian $D^2p_{\sigma}$, which controls variation of the normal, and
-$\|\nabla p_{\sigma}\|$, which sets the scale relating density variation to
-geometric variation. In particular, since Gaussian smoothing suppresses
-high-frequency components of $D^2p_{\sigma}$, it suppresses the fine-scale
-variation of the shape operator and hence removes small-scale geometric
-structure from the level set.
+The eigenvalues of $S$ correspond to the principal curvatures of $\M_c^\sigma$. Therefore, Gaussian smoothing influences level-set geometry through two main factors: the Hessian $D^2 p_{\sigma}$, which controls normal variation, and $\|\nabla p_{\sigma}\|$, which scales density variation relative to geometric variation. Because Gaussian smoothing suppresses high-frequency components of $D^2 p_{\sigma}$, it dampens fine-scale variations of the shape operator and removes small-scale geometric structures from the level set.
 
-It is important to distinguish this suppression of fine-scale variation from
-a pointwise reduction in curvature. In general, Gaussian smoothing does not
-imply that the principal curvatures of a fixed level set decrease
-monotonically with $\sigma$. Indeed, the shape operator
+It is important to distinguish this suppression of fine-scale variation from a uniform, pointwise reduction in curvature. In general, Gaussian smoothing does not guarantee that the principal curvatures of a fixed level set decrease monotonically with $\sigma$. Indeed, the shape operator
 \begin{equation}
     S_\sigma(x)
     =
     -\frac{1}{\|\nabla p_\sigma(x)\|}
-    P_T D^2p_\sigma(x) P_T,
+    P_T D^2 p_\sigma(x) P_T,
     \qquad
-    x\in\mathcal{M}_c^\sigma,
+    x \in \M_c^\sigma,
 \end{equation}
-depends on both $D^2p_\sigma$ and $\nabla p_\sigma$, and is evaluated on the
-moving level set $\mathcal{M}_c^\sigma$. Although Gaussian smoothing
-suppresses high-frequency components of $D^2p_\sigma$, it simultaneously
-changes $\nabla p_\sigma$ and the location of the level set itself. Hence
-there is no general pointwise monotonicity of $S_\sigma$ or of its
-eigenvalues.
+depends simultaneously on $D^2 p_\sigma$ and $\nabla p_\sigma$, and is evaluated along the evolving level set $\M_c^\sigma$. Although Gaussian smoothing attenuates high-frequency modes of $D^2 p_\sigma$, it also alters $\nabla p_\sigma$ and the spatial location of the level set itself. Consequently, $S_\sigma$ and its eigenvalues do not satisfy a general pointwise monotonicity property.
 
-Moreover, the topology of $\mathcal{M}_c^\sigma$ can change with $\sigma$.
-Such a change occurs when the level $c$ passes through a critical point,
-i.e., when
+Furthermore, the topology of $\M_c^\sigma$ can change as $\sigma$ varies. Such topological transitions occur when the level value $c$ passes through a critical point where
 \begin{equation}
-    p_\sigma(x)=c,
+    p_\sigma(x) = c,
     \qquad
-    \nabla p_\sigma(x)=0.
+    \nabla p_\sigma(x) = 0.
 \end{equation}
-For example, two components of a super-level set may merge through a
-neck as $\sigma$ increases. Thus, while smoothing removes fine-scale
-spatial variation from the density and its derivatives, it should not be
-interpreted as a monotone decrease of the curvature of every individual
-level set. Instead that Gaussian smoothing
-preferentially suppresses spatial frequencies at scales smaller than
-$\sigma$, and therefore suppresses fine-scale geometric variation encoded
-by the derivatives of the density.
+For instance, two distinct connected components of a super-level set may merge through a neck as $\sigma$ increases. Thus, while smoothing removes high-frequency spatial variations from the density and its derivatives, it should not be viewed as causing a monotone decrease in curvature for every individual level set. Rather, Gaussian smoothing preferentially suppresses spatial frequencies at scales smaller than $\sigma$, thereby filtering out fine-scale geometric structures encoded by the higher-order derivatives of the density.
 
-More generally, adding Gaussian noise monotonically suppresses all
-$L^2$ Sobolev energies of the smoothed density.  Let
+More generally, adding Gaussian noise monotonically suppresses all $L^2$ Sobolev energies of the smoothed density. Let
 \begin{equation}
     p_\sigma = G_\sigma * p^\star,
     \qquad
@@ -691,238 +583,200 @@ $L^2$ Sobolev energies of the smoothed density.  Let
     \frac{1}{(2\pi\sigma^2)^{D/2}}
     \exp\!\left(-\frac{\|x\|^2}{2\sigma^2}\right),
 \end{equation}
-where $D$ is the ambient dimension.  Since
-$\partial_{\sigma^2}p_\sigma = \frac{1}{2}\Delta p_\sigma$, we have, for
-every integer $k\geq 0$,
+where $D$ denotes the ambient dimension. Since $p_\sigma$ satisfies the heat equation $\partial_{\sigma^2} p_\sigma = \frac{1}{2} \Delta p_\sigma$, we have, for every integer $k \geq 0$,
 \begin{equation}
     \frac{\partial}{\partial \sigma^2}
-    \frac{1}{2}\int_{\mathbb{R}^D}
-    \left|D^k p_\sigma(x)\right|^2\,dx
+    \frac{1}{2}\int_{\R^D}
+    \left|D^k p_\sigma(x)\right|^2 \dd x
     =
     -\frac{1}{2}
-    \int_{\mathbb{R}^D}
-    \left|\nabla D^k p_\sigma(x)\right|^2\,dx
+    \int_{\R^D}
+    \left|\nabla D^k p_\sigma(x)\right|^2 \dd x
     \leq 0.
     \label{eq:sobolev-monotonicity}
 \end{equation}
-Thus, increasing the noise level $\sigma$ monotonically decreases the
-$L^2$ norms of all spatial derivatives of $p_\sigma$.  In particular,
+Increasing the noise level $\sigma$ monotonically decreases the $L^2$ norms of all spatial derivatives of $p_\sigma$. In particular,
 \begin{align}
     \frac{\partial}{\partial \sigma^2}
-    \frac{1}{2}\int |\nabla p_\sigma|^2\,dx
+    \frac{1}{2}\int_{\R^D} |\nabla p_\sigma|^2 \dd x
     &=
-    -\frac{1}{2}\int |\Delta p_\sigma|^2\,dx
-    \leq 0,\\
+    -\frac{1}{2}\int_{\R^D} |\Delta p_\sigma|^2 \dd x
+    \leq 0, \\
     \frac{\partial}{\partial \sigma^2}
-    \frac{1}{2}\int |D^2p_\sigma|^2\,dx
+    \frac{1}{2}\int_{\R^D} |D^2 p_\sigma|^2 \dd x
     &=
-    -\frac{1}{2}\int |\nabla\Delta p_\sigma|^2\,dx
+    -\frac{1}{2}\int_{\R^D} |\nabla \Delta p_\sigma|^2 \dd x
     \leq 0.
 \end{align}
-Equivalently, in the Fourier domain,
+Equivalently, in the Fourier domain:
 \begin{equation}
-    \frac{1}{2}\int_{\mathbb{R}^D}
-    |D^k p_\sigma(x)|^2\,dx
+    \frac{1}{2}\int_{\R^D}
+    |D^k p_\sigma(x)|^2 \dd x
     \;\propto\;
-    \frac{1}{2}\int_{\mathbb{R}^D}
+    \frac{1}{2}\int_{\R^D}
     \|\xi\|^{2k}
     e^{-\sigma^2\|\xi\|^2}
-    \left|\widehat{p^\star}(\xi)\right|^2\,d\xi.
+    \left|\widehat{p^\star}(\xi)\right|^2 \dd \xi.
     \label{eq:fourier-sobolev}
 \end{equation}
-Hence increasing $\sigma$ progressively removes increasingly fine-scale
-structure, with spatial frequency $\|\xi\|$ suppressed according to
-$e^{-\sigma^2\|\xi\|^2}$.
+Increasing $\sigma$ progressively filters out fine-scale features, suppressing spatial frequencies $\|\xi\|$ according to $e^{-\sigma^2\|\xi\|^2}$.
 
-This relates to the conventional wisdom where more refined time steps are required as we approach closer to our final density to capture the higher frequency structure of density. This is particularly apparent for image and audio data. JPEG compression takes advantage of writing the image as a Fourier decomposition, and in doing so discards the high frequency terms which are not noticeable to the human eye. 
+This behavior aligns with numerical intuition in generative modeling and sampling, where finer time steps are required near the final data distribution ($t \to 0$ or $\sigma \to 0$) to resolve higher-frequency density details. This phenomenon is especially prominent in high-dimensional image and audio signals. Analogously, JPEG compression exploits Fourier-domain (or discrete cosine) representations by discarding high-frequency components that contribute negligibly to human visual perception.
 
 \newpage
 
 \section{Ridges}
 \label{sec:ridges}
+
 \subsection{Motivation}
 
-An at first unintuitive aspect of the manifold hypothesis is that the lower dimensional space around which data concentrate is not necessarily, or in fact usually, the initial manifold. This is because as the amount of noise that we add increases the effective radius with which we convolve grows and includes more of our initial manifold. We see a noise density concentrating around a different space. This begs the question ``what is this new space and how does it behave and evolve?''
+An initially counterintuitive aspect of the manifold hypothesis is that the lower-dimensional space around which perturbed data concentrates is typically not the original manifold $\M$. As the noise level increases, the effective kernel bandwidth grows, encompassing a broader region of the data space. Consequently, the noise-corrupted density concentrates around an evolving low-dimensional structure. This raises the question: \emph{What is this evolving space, and how does its geometry behave over time?}
 
-This becomes immediately obvious when considering smoothing a pair of distinct Bernouli random variables: the modes of the sum is not the union of the modes.
+This phenomenon is evident even when considering the convolution of simple discrete distributions, such as a mixture of Gaussian-smoothed point masses: the modes of the smoothed distribution do not simply coincide with the original support.
 
 \begin{figure}[htbp]
     \centering
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/ridge_gaussian.png}
-        \caption{Gaussian smoothing moves modes in 1-D}
+        \caption{Gaussian smoothing shifts modes in 1D}
         \label{fig:ridge_gaussian}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.48\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/ridge_wiggly.png}
-        \caption{Gaussian smoothing moves the ridge in 2-D}
+        \caption{Gaussian smoothing shifts the ridge in 2D}
         \label{fig:ridge_wiggly}
     \end{subfigure}
-    \caption{Comparison of ridge structures.}
+    \caption{Comparison of ridge structures under varying smoothing scales.}
     \label{fig:ridge_comparison}
 \end{figure}
 
-With this intuition it becomes fairly easy to rediscover the definition of a ridge. It is where the normal component of our changing density is zero. But a priori we do not know which components are normal. 
+With this visual intuition, we can formalize the definition of a ridge: it is the locus of points where the gradient of the density restricted to the normal directions vanishes. However, a priori, the normal directions are not fixed externally.
 
-The resolution is to let the density define its own normal directions. At a
-point on a $d$-dimensional ridge the density behaves like a mountain ridge: it
-is at a local maximum in the $D-d$ directions transverse to the ridge, while
-along the remaining $d$ directions it varies slowly. Transverse to the ridge the
-density curves sharply downward; along it, the curvature is mild. This is a
-statement about the Hessian. Let $g(x) = \nabla p(x)$ and $H(x) = \nabla^2 p(x)$,
-and order the eigenvalues of $H(x)$ as
-\[
-    \lambda_1(x) \ge \cdots \ge \lambda_d(x) \ge \lambda_{d+1}(x) \ge \cdots \ge \lambda_D(x),
-\]
-with orthonormal eigenvectors $u_1(x), \dots, u_D(x)$. The directions of
-sharpest downward curvature are those with the most negative eigenvalues, so we
-define the normal space at $x$ to be the span of the bottom $D-d$
-eigenvectors, and the tangent space to be the span of the top $d$. Writing
-$V(x) = [u_{d+1}(x) \mid \cdots \mid u_D(x)]$ for the normal frame,
-$L(x) = V(x)V(x)^\top$ is the projector onto the normal space. This is the point
-of the construction: which directions are normal is not supplied from outside,
-it is read off from the second-order structure of the smoothed density itself.
+The key resolution is to let the density determine its own normal frame. At a point on a $d$-dimensional ridge, the density exhibits ridge-like behavior: it achieves a local maximum along the $D-d$ transverse directions, while varying comparatively smoothly along the remaining $d$ intrinsic directions. Transverse to the ridge, the density curves sharply downward; along the ridge, its curvature is mild. 
 
-A ridge point is then one from which the density cannot be increased by moving
-normally. Equivalently, the normal component of the gradient vanishes. Define
-the projected gradient
-\[
-    G(x) = L(x)\,g(x),
-\]
-and the ridge as the set where it is zero and the transverse curvature is
-genuinely downward:
-\[
-    R = \bigl\{ x : \|G(x)\| = 0,\ \lambda_{d+1}(x) < 0 \bigr\}.
-\]
-The second condition, $\lambda_{d+1}(x) < 0$, requires the largest of the normal
-eigenvalues to still be negative, so that every normal direction is a direction
-of local descent and the point is a maximum transverse to the ridge rather than
-a saddle. The case $d = 0$ recovers ordinary modes: $L(x) = I$, the condition
-$\|G(x)\| = 0$ becomes $\nabla p(x) = 0$, and $\lambda_1(x) < 0$ asks for a local
-maximum. A $d$-ridge relaxes this by demanding a critical point only in the
-$D-d$ normal directions, and negative curvature only in the corresponding block.
+Mathematically, this condition is governed by the Hessian of the density. Let $g(x) = \nabla p(x)$ and $H(x) = \nabla^2 p(x)$, and denote the eigenvalues of $H(x)$ in descending order:
+\begin{equation}
+    \lambda_1(x) \ge \lambda_2(x) \ge \dots \ge \lambda_d(x) \ge \lambda_{d+1}(x) \ge \dots \ge \lambda_D(x),
+\end{equation}
+with corresponding orthonormal eigenvectors $u_1(x), \dots, u_D(x)$. The directions of sharpest downward concavity correspond to the most negative eigenvalues. Thus, we define the normal space at $x$ as the span of the bottom $D-d$ eigenvectors, and the tangent space as the span of the top $d$ eigenvectors. Writing $V(x) = [u_{d+1}(x) \mid \dots \mid u_D(x)]$ for the normal frame, the orthogonal projector onto the normal subspace is given by:
+\begin{equation}
+    L(x) = V(x)V(x)^\top.
+\end{equation}
+Importantly, the normal space is not specified exogenously; it is determined intrinsically by the second-order geometric structure of the density field itself.
 
-\subsection{The score concentrates on the ridge}
+A point $x$ belongs to the $d$-dimensional ridge if the density cannot be increased by moving along any normal direction. Equivalently, the projection of the gradient onto the normal space vanishes. Defining the projected gradient:
+\begin{equation}
+    G(x) := L(x) g(x),
+\end{equation}
+the $d$-dimensional ridge set $R$ is defined as:
+\begin{equation}
+    R := \bigl\{ x \in \R^D : \|G(x)\| = 0, \; \lambda_{d+1}(x) < 0 \bigr\}.
+\end{equation}
+The strict inequality $\lambda_{d+1}(x) < 0$ guarantees that even the largest eigenvalue in the normal direction is strictly negative, ensuring local maximality transverse to the ridge rather than a saddle point. 
 
-We first record a convenient fact: the ridge of $\log p_\sigma$ and the ridge of
-$p_\sigma$ are the same set. Since $\log$ is strictly increasing, $\nabla \log
-p_\sigma = p_\sigma^{-1}\nabla p_\sigma$ vanishes exactly where $\nabla p_\sigma$
-does, and the two Hessians differ by the rank-one term $p_\sigma^{-1}\nabla
-p_\sigma \nabla p_\sigma^\top$, which vanishes wherever the gradient does. On the
-ridge gradient, projected gradient and normal eigenframe all agree
-between $p_\sigma$ and $\log p_\sigma$. We work with $\log p_\sigma$ from now on,
-for two reasons: it is the object the generative model actually learns, its
-gradient being the score; and as shown in \citep{genovese2014nonparametric}, the surrogate property \autoref{thm:surrogate_ridge}
-holds in an $O(1)$ neighbourhood of $\M$ for the log-density but only in an
-$O(\sigma)$ neighbourhood for the density itself.
+When $d = 0$, this definition recovers classical local modes: $L(x) = \Id$, the condition $\|G(x)\| = 0$ simplifies to $\nabla p(x) = 0$, and $\lambda_1(x) < 0$ isolates local maxima. A general $d$-ridge relaxes this requirement by demanding critical point behavior solely within the $(D-d)$-dimensional normal subspace, coupled with negative concavity across the normal block.
+
+\subsection{Concentration of the Score along the Ridge}
+
+We first highlight a useful structural property: the ridge of $\log p_\sigma$ and the ridge of $p_\sigma$ define the identical spatial set. Because the logarithmic function is strictly monotonic, $\nabla \log p_\sigma = p_\sigma^{-1} \nabla p_\sigma$ vanishes if and only if $\nabla p_\sigma = 0$. Furthermore, their Hessians satisfy:
+\begin{equation}
+    \nabla^2 \log p_\sigma = \frac{1}{p_\sigma} \nabla^2 p_\sigma - \frac{1}{p_\sigma^2} \nabla p_\sigma \nabla p_\sigma^\top,
+\end{equation}
+which coincides with $p_\sigma^{-1} \nabla^2 p_\sigma$ whenever the projected gradient vanishes on the ridge. 
+
+We work primarily with the log-density $\log p_\sigma$ for two key reasons:
+\begin{enumerate}
+    \item Its gradient $\nabla \log p_\sigma$ constitutes the score function, which score-based generative models directly learn.
+    \item As established by \citet{genovese2014nonparametric}, the surrogate approximation property (\autoref{thm:surrogate_ridge}) holds within an $O(1)$ neighborhood of $\M$ for the log-density, whereas it holds only within a restricted $O(\sigma)$ neighborhood for the raw density $p_\sigma$.
+\end{enumerate}
 
 \begin{theorem}[Surrogate Ridge Approximation, Theorem~7 of \citep{genovese2014nonparametric}]
     \label{thm:surrogate_ridge}
-    Consider the Hidden Manifold Model with small noise variance $\sigma^2$, and assume that the manifold $\M$ has no boundary. Then the hyper-ridge set $R$ of the density $p$ satisfies
-    \[
-      \mathrm{Haus}(\M, R) = O\Big(\sigma^2 \log \frac{1}{\sigma}\Big),
-    \]
-    and $R$ is topologically homeomorphic to $\M$. Consequently, as the noise parameter $\sigma \to 0$ with $\M$ held fixed, the ridge $R$ converges to $\M$.
-    \end{theorem}
+    Consider the Hidden Manifold Model with noise variance $\sigma^2$, and assume that the underlying manifold $\M$ is compact and boundaryless. Then the hyper-ridge set $R_\sigma$ of the density $p_\sigma$ satisfies:
+    \begin{equation}
+      \operatorname{Haus}(\M, R_\sigma) = O\left(\sigma^2 \log \frac{1}{\sigma}\right),
+    \end{equation}
+    and $R_\sigma$ is topologically homeomorphic to $\M$. Consequently, in the small-noise limit $\sigma \to 0$ with $\M$ fixed, the ridge $R_\sigma$ converges to $\M$ in Hausdorff distance.
+\end{theorem}
 
-Inside the tube of radius $O(\sigma)$ around the manifold, the score
-is overwhelmingly a normal restoring field. \citep{genovese2014nonparametric} shows that
-$
-    \nabla \log p_\sigma(x)
-    = -\tfrac{1}{\sigma^2}\bigl((x - \hat x) + O(K_\sigma^2)\bigr),
-$
-where $\hat x = \pi_\M(x)$ is the projection onto $\M$ and
-\[
-    K_\sigma = \sqrt{\,2\sigma^2 \log\!\bigl(\sigma^{-(A+D)}\bigr)\,}
-             = O\!\left(\sigma\sqrt{\log \tfrac{1}{\sigma}}\right).
-\]
-The normal component has size $O(\sigma^{-1})$ while the tangential component is
-$O(1)$: as $\sigma \to 0$ the score is, to leading order, a restoring force. And this restoring force is towards the ridge, not $\M$
+Inside an $O(\sigma)$ neighborhood around the manifold, the score operates predominantly as a normal restoring force field. \citet{genovese2014nonparametric} showed that:
+\begin{equation}
+    \nabla \log p_\sigma(x) = -\frac{1}{\sigma^2}\left((x - \hat{x}) + O(K_\sigma^2)\right),
+\end{equation}
+where $\hat{x} = \pi_\M(x)$ denotes the orthogonal projection onto $\M$, and
+\begin{equation}
+    K_\sigma = \sqrt{2\sigma^2 \log\left(\sigma^{-(A+D)}\right)} = O\left(\sigma\sqrt{\log \tfrac{1}{\sigma}}\right).
+\end{equation}
+The normal component of the score has magnitude $O(\sigma^{-1})$, whereas the tangential component remains $O(1)$. Thus, as $\sigma \to 0$, the score becomes a strong linear restoring force toward the ridge rather than toward $\M$ directly.
 
-Writing the score as a first-order expansion about the manifold projection $m = \pi_\M(x)$ and, about the ridge projection $r = \pi_{R_\sigma}(x)$:
+This distinction becomes clear by comparing first-order Taylor expansions of the score around the manifold projection $m = \pi_\M(x)$ and around the ridge projection $r = \pi_{R_\sigma}(x)$:
 \begin{align}
     \nabla \log p_\sigma(x)
         &= \nabla_\M \log p_\sigma(m)
            - \frac{1}{\sigma^2}(x - m)
            + O(K_\sigma^2)
            + o\!\left(\frac{\|x - m\|}{\sigma^2}\right),
-        \label{eq:expand-manifold}\\[2pt]
+        \label{eq:expand-manifold} \\[2pt]
     \nabla \log p_\sigma(x)
         &= \nabla_{R_\sigma} \log p_\sigma(r)
            - \frac{1}{\sigma^2}(x - r)
            + o\!\left(\frac{\|x - r\|}{\sigma^2}\right).
         \label{eq:expand-ridge}
 \end{align}
-Expanding about the manifold leaves a residual $O(K_\sigma^2)$, while expanding about the ridge does not.
-This residual is a constant
-normal bias of magnitude $K_\sigma^2/\sigma^2 = O(\log \tfrac{1}{\sigma})$,
-present even on the manifold $\M$ itself. The zero of the normal restoring field has been pushed off $\M$ by exactly $O(K_\sigma^2)$ in the normal direction. That displaced zero is the ridge, and $O(K_\sigma^2)$ is
-precisely the Hausdorff bias $\mathrm{Haus}(\M, R_\sigma) = O(\sigma^2 \log
-\tfrac{1}{\sigma})$ of \autoref{thm:surrogate_ridge}. 
+Expanding around the manifold leaves a residual offset of order $O(K_\sigma^2)$, whereas expanding around the ridge eliminates this term. This residual acts as a constant normal bias of magnitude $K_\sigma^2 / \sigma^2 = O(\log \frac{1}{\sigma})$, which persists on the manifold $\M$ itself. The zero-crossing of the normal restoring field is displaced from $\M$ by $O(K_\sigma^2)$ along the normal direction—a displacement matching the Hausdorff distance $\operatorname{Haus}(\M, R_\sigma) = O(\sigma^2 \log \frac{1}{\sigma})$ in \autoref{thm:surrogate_ridge}.
 
-Projecting \eqref{eq:expand-ridge} onto the normal space $N_r$ at the ridge
-point makes this exact. The intrinsic gradient $\nabla_{R_\sigma}\log p_\sigma(r)$
-lies in $T_r R_\sigma$ and is annihilated by $P_N(r)$, leaving
-\[
-    P_N(r)\,\nabla \log p_\sigma(x)
+Projecting \eqref{eq:expand-ridge} onto the normal subspace $N_r$ at the ridge point $r$ formalizes this behavior. Because the intrinsic gradient $\nabla_{R_\sigma} \log p_\sigma(r)$ lies entirely within the tangent space $T_r R_\sigma$, it is annihilated by the normal projector $P_N(r)$, yielding:
+\begin{equation}
+    P_N(r) \nabla \log p_\sigma(x)
         = -\frac{1}{\sigma^2}(x - r)
           + o\!\left(\frac{\|x - r\|}{\sigma^2}\right).
-\]
-The normal score is a pure linear restoring field toward the ridge, with slope
-$-\sigma^{-2}$ and no curvature-induced remainder. 
+\end{equation}
+Thus, the normal score component acts as a pure linear restoring force directed toward the ridge, with universal spring constant $-\sigma^{-2}$ and no curvature-induced residual. This confirms that the ridge set constitutes the precise geometric attractor of the score function's dominant restoring field.
 
-This also reinforces our definition of the ridge as the locus where the normal
-component of the smoothed gradient vanishes. We see that this locus is the genuine attractor of the score's dominant term.
+\subsection{Limitations of the Ridge Formulation}
 
+The underlying density fields used to define the ridge are mathematically smooth. For any $t > 0$, the noise-smoothed density $p_t$ is a Gaussian convolution and is therefore real-analytic. Consequently, the posterior mean $m_t(y)$, the posterior covariance field $A_t(y)$, and the score Hessian $\nabla^2 \log p_t(y) = \frac{1}{t}(A_t(y) - \Id)$ are all analytic in $y$. Their eigenvalues $\lambda_1(y) \ge \dots \ge \lambda_D(y)$ vary continuously throughout $\R^D$ (\autoref{sec:pcf}). 
 
-\subsection{Failings of the Ridge}
-
-The objects the ridge is built from are smooth.
-For $t > 0$ the density $p_t$ is a Gaussian convolution, hence real-analytic. Thus
-the posterior mean $m_t$, the covariance field $A_t$, and the Hessian
-$\nabla^2 \log p_t = (A_t - I)/t$ are all analytic in $y$, and their eigenvalues
-$\lambda_1(y) \ge \cdots \ge \lambda_D(y)$ vary continuously everywhere (see \autoref{sec:pcf}). Yet the ridge set $R_t$ is not a continuous functional of the data.
-
-
-Two independent failure modes break the continuity of $R_t$:
+However, despite the smoothness of $p_t$, the ridge set $R_t$ itself does not depend continuously on the data distribution. Two distinct failure modes break the continuity of $R_t$:
 \begin{enumerate}
-    \item \textbf{Subspace Ambiguity:} Where $\lambda_d - \lambda_{d+1} \to 0$, the normal projector $P_N$ is ill-defined, rendering the condition $\|P_N \nabla \log p_t\| = 0$ meaningless as the normal frame loses its orientation.
-    \item \textbf{Topological Jumps:} Where $\lambda_{d+1}(y) = 0$, the concavity condition triggers, causing $R_t$ to abruptly gain or lose entire connected components.
+    \item \textbf{Subspace Ambiguity (Eigengap Collapse):} At points where the spectral gap vanishes ($\lambda_d - \lambda_{d+1} \to 0$), the normal projector $P_N$ becomes ill-defined. Consequently, the normal gradient condition $\|P_N \nabla \log p_t\| = 0$ becomes ill-posed as the normal eigenframe loses its orientation.
+    \item \textbf{Topological Discontinuities:} At locations where $\lambda_{d+1}(y) = 0$, the concavity condition triggers abruptly, causing $R_t$ to instantly gain or lose entire connected components.
 \end{enumerate}
-\citep{genovese2014nonparametric} accounts for this by establishing stability under an assumed lower bound $\beta$ on this eigengap. The instability belongs to the mapping $(m_t, A_t) \mapsto R_t$ itself, and this is expected since passing smooth analytic fields through rigid scalar thresholds inevitably creates discontinuities.
 
-A second, more basic problem is that the split requires the integer $d$ to be
-fixed in advance, and there is no consistent choice. The dimension is an input
-to the eigenspace selection, yet the natural scale-dependent notion of dimension,
-$d_{\mathrm{eff}}(t) = \mathbb{E}\,\mathrm{tr}\,A_t$, is neither an integer nor
-constant in $t$: it interpolates between the intrinsic dimension at small noise
-and zero at large noise, and it overshoots in between (Chapter~\ref{sec:pcf}).
+\citet{genovese2014nonparametric} address these failure modes by proving stability bounds under an assumed lower bound $\beta > 0$ on the spectral gap. Nevertheless, the underlying instability is intrinsic to the map $(m_t, A_t) \mapsto R_t$: passing smooth analytic fields through rigid scalar thresholding functions inevitably induces spatial and temporal discontinuities.
 
-\paragraph{Example of Discontinuity of the Ridge.} Consider a distribution on $\mathbb{S}^1\subset\mathbb{R}^2$ which is a 1:3 mixture of 2 uniform densities on 2 semicircles. We see that a small change in noise can drastically change the location and topology of the ridge. Additionally, knowing the ridge does not tell us how the data is distributed along it, and density might be negligible at points on the ridge.
+A second structural limitation is that the ridge formulation requires fixing the intrinsic dimension $d \in \mathbb{N}$ a priori. In practice, there is no single consistent choice of $d$ across all noise scales. While dimension is a required integer parameter for normal frame projection, the natural scale-dependent effective dimension:
+\begin{equation}
+    \deff(t) = \E\left[\tr A_t(X_t)\right]
+\end{equation}
+is neither integer-valued nor constant in $t$. Instead, $\deff(t)$ continuously interpolates between the intrinsic dimension $d$ at small noise scales and zero at large noise scales, often overshooting non-monotonically at intermediate scales (\autoref{sec:pcf}).
+
+\paragraph{Example: Discontinuity of the Ridge Set.} 
+Consider a probability distribution supported on the unit circle $\mathbb{S}^1 \subset \R^2$, formed by a $1:3$ mixture of uniform densities along the left and right semicircles, respectively. As shown in \autoref{fig:circle_ridges}, a minute increase in the smoothing parameter $\sigma$ causes a drastic shift in both the spatial position and topology of the ridge. Furthermore, knowing the geometry of $R_\sigma$ provides no information regarding how mass is distributed along it; the probability density may be negligible over large portions of the ridge set.
 
 \begin{figure}[htbp]
     \centering
     \begin{subfigure}[b]{0.48\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/circle-ridge.png}
-        \caption{Ridge of a circle with $\sigma=0.54$}
+        \caption{Ridge of a asymmetric circle density at $\sigma = 0.54$}
         \label{fig:circle_ridge_1}
-    \end{subfigure}%
+    \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.48\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/circle-ridge-2.png}
-        \caption{Ridge of a circle with $\sigma = 0.58$}
+        \caption{Ridge of a asymmetric circle density at $\sigma = 0.58$}
         \label{fig:circle_ridge_2}
     \end{subfigure}
-    \caption{Comparison of circle ridges at different noise levels $\sigma$, with initial density 1:3 mixture of 2 uniform densities on left and right semicircles, respectively.}
+    \caption{Comparison of ridge structures for an asymmetric semicircle density mixture at different noise levels $\sigma$. A small change in $\sigma$ alters the topological structure of the ridge.}
     \label{fig:circle_ridges}
 \end{figure}
 
-While the ridge $R_\sigma$ has desirable qualities for small $\sigma$, and is the natural attractor of the score, for larger $\sigma$ it may be ill defined and can be discontinuous. Recalling that the ridge is a functional of the spectrum of the Jacobian of the score leads us to \autoref{sec:pcf}.
+In summary, while the ridge set $R_\sigma$ provides a useful theoretical surrogate for $\M$ at small noise levels $\sigma$ and serves as the local attractor of the score field, it becomes ill-behaved and discontinuous at larger noise scales. Recognising that the ridge is fundamentally a functional of the Jacobian spectrum of the score leads naturally to the continuous formulation presented in \autoref{sec:pcf}.
 
 \newpage
 
@@ -1284,8 +1138,10 @@ so the resulting MMSE-adaptive discretisation is
 
 
 \newpage
+
 \section*{Acknowledgements}
 I am deeply grateful to my supervisors Eddie Aamari and Simon Coste, who are the sole reason this research internship was possible and helped me explore a question I had for more than a year.
+
 \section*{AI Usage}
 Image to text converters were used to aid in typesetting equations, and large language models were used for some code generation and in editing parts of the report.
 
