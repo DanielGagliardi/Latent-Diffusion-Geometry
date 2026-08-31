@@ -75,16 +75,16 @@ The value in understanding this is twofold: firstly, to be able to make better m
 
 One big idea is the notion of data lying on some low-dimensional space, which makes both learning and sampling from distributions supported on this lower-dimensional space easier. However this belief only truly simplifies the system in the small noise regime. All sorts of complex geometry can happen in the higher noise regimes. We do not, as we will see, have a nicely behaved interpolating family of manifolds.
 
-Before doing the IASD M2 program, I had written a master's dissertation on diffusion models under the manifold hypothesis, under the supervision of George Deligiannidis. During this I became deeply interested in dimension estimation of datasets. This at best vauge and at worst terribly ill-posed question seemed to me one where and answer would tell us a lot about the natural geometry of data, and how diffusion models are able to make use of this. Almost every paper I found on the interplay between manifolds and diffusion models cited work from Eddie Aamari.
+Before doing the IASD M2 program, I had written a master's dissertation on diffusion models under the manifold hypothesis, under the supervision of George Deligiannidis. During this I became deeply interested in dimension estimation of datasets. This at best vague and at worst terribly ill-posed question seemed to me one where and answer would tell us a lot about the natural geometry of data, and how diffusion models are able to make use of this. Almost every paper I found on the interplay between manifolds and diffusion models cited work from Eddie Aamari.
 
-In November 2025 I reached out to Eddie Aamari to further discuss what the geometry of data could look like, and this led to this internship project. The initial goal was to understand the interplay between geometry affecting sampling error and how this could encourage simpler embeddings in a latent diffusion setting. However, given the complexity of work being done limited time was spent on investigating autoencoders so far.
+In November 2025 I reached out to Eddie Aamari to further discuss what the geometry of data could look like, and this led to this internship project. The initial goal was to understand the interplay between geometry affecting sampling error and how this could encourage simpler embeddings in a latent diffusion setting. However, given the complexity of work being done limited time was spent on investigating auto-encoders so far.
 
-A key challenge of this project has been stirking the balance between geometry: where things are well defined, and diffusion of probability densities: where simply by adding noise we violently change the notions of geometry we would like to equip our density with. This tradeoff has led to looking at several objects, which while interesting in their own right have not been helpful in bounding sampling error. I do believe that the final part on posterior covariance fields \autoref{sec:pcf} does provide a new insight on where true complexity lies in the diffusion process.
+A key challenge of this project has been striking the balance between geometry: where things are well defined, and diffusion of probability densities: where simply by adding noise we violently change the notions of geometry we would like to equip our density with. This trade-off has led to looking at several objects, which while interesting in their own right have not been helpful in bounding sampling error. I do believe that the final part on posterior covariance fields \autoref{sec:pcf} does provide a new insight on where true complexity lies in the diffusion process.
 
 \newpage
 
 \begin{abstract}
-    Diffusion based generative models have become ubiqitous over recent years. Their success is often attributed to the geometric structure of natual data. This is commonly refered to as the manifold hypothesis. In this report we summarise our main work so far on understanding the geometry of diffusion. We examine an anisotropic stability bound, level sets, ridges, and functionals of the posterior covariance. Ultimately, we settle on the spectrum of the posterior covariance being the key object to understanding the geometery throughout the diffusion process.
+    Diffusion based generative models have become ubiquitous over recent years. Their success is often attributed to the geometric structure of natural data. This is commonly referred to as the manifold hypothesis. In this report we summarise our main work so far on understanding the geometry of diffusion. We examine an anisotropic stability bound, level sets, ridges, and functionals of the posterior covariance. Ultimately, we settle on the spectrum of the posterior covariance being the key object to understanding the geometery throughout the diffusion process.
 \end{abstract}
 
 \vspace{30mm}
@@ -109,7 +109,7 @@ The progress in generative modelling over the last decade has been rapid. A key 
 
 While vast amounts of work has been done on improving the capabilities of diffusion models, the goemetry of the entire diffusion process has been under explored.
 
-Initially, this research internship aimed to investigate the geometry of both the autoencoder and denoiser in latent diffusion models. If one can show that the geometry of a target distribtuion influences the estimation of scores, discretisation error, or sampling stability, then the case can be made that when the autoencoder and diffusion model are trained jointly, that the autoencoder learns a more geometrically regular embedding.
+Initially, this research internship aimed to investigate the geometry of both the auto-encoder and denoiser in latent diffusion models. If one can show that the geometry of a target distribution influences the estimation of scores, discretisation error, or sampling stability, then the case can be made that when the auto-encoder and diffusion model are trained jointly, that the auto-encoder learns a more geometrically regular embedding.
 
 We spent the internship so far almost entirely looking at the geometry of diffusion.
 
@@ -117,7 +117,7 @@ We spent the internship so far almost entirely looking at the geometry of diffus
 
 There exists literature on how different geometric aspects affect the diffusion process, but these are mostly asymptotic results for highly regular target densities \citep{benton2024nearly}, \citep{potaptchik2024linear}, \citep{liang2025low}.
 
-The main challenge of the question ``how does geomerty affect diffusion'' is answering what we mean by ``geometry''. There are some issues with existing methods which make use of dimension and reach/curvature of the support of $p_\text{data}$ :
+The main challenge of the question ``how does geometry affect diffusion'' is answering what we mean by ``geometry''. There are some issues with existing methods which make use of dimension and reach/curvature of the support of $p_\text{data}$ :
 \begin{itemize}
     \item Dimension:
     \begin{itemize}
@@ -131,7 +131,7 @@ The main challenge of the question ``how does geomerty affect diffusion'' is ans
     \item Reach, curvature:
     \begin{itemize}
         \item Can be $0,\infty$ at intersections or corners
-        \item Can vary wildy along the support of $p_\text{data}$
+        \item Can vary wildly along the support of $p_\text{data}$
     \end{itemize}
 \end{itemize}
 
@@ -160,11 +160,11 @@ We find that the spectrum of the posterior covariance captures geometric variati
 
 
 
-The manifold hypothesis is an explaination of the effectiveness of machine learning for unstructured high-dimensional data. It states that a distribution $X \sim p_\text{data}, X \in \R^D$ lies on (or is concentrated around) a submanifold $\M$ of lower dimension $d \ll D$. This effectively makes the number of degrees of freedom $d$, allowing models to learn these lower dimensional spaces in settings where we may have $n < D$ data points.
+The manifold hypothesis is an explanation of the effectiveness of machine learning for unstructured high-dimensional data. It states that a distribution $X \sim p_\text{data}, X \in \R^D$ lies on (or is concentrated around) a submanifold $\M$ of lower dimension $d \ll D$. This effectively makes the number of degrees of freedom $d$, allowing models to learn these lower dimensional spaces in settings where we may have $n < D$ data points.
 
-The main argument for the manifold hypothesis is the curse of dimensionality, whereby there are too many dimensions making data very sparse and hard for models to learn from. Many counterintuitve behaviours are exhibited in high dimensional space, for example standard Gaussian data from $\mathcal{N}(0;\Id_D)$ concentrating around the shell of radius $\sqrt{D}$.
+The main argument for the manifold hypothesis is the curse of dimensionality, whereby there are too many dimensions making data very sparse and hard for models to learn from. Many counter-intuitive behaviours are exhibited in high dimensional space, for example standard Gaussian data from $\mathcal{N}(0;\Id_D)$ concentrating around the shell of radius $\sqrt{D}$.
 
-The justification of the manifold hypothesis is that it is a good canidate model for naturaly arising data, which tends to be locally continuous, and have fewer degrees of freedom. The space of natural images is far smaller than the space of all possible images, for example.
+The justification of the manifold hypothesis is that it is a good candidate model for naturally arising data, which tends to be locally continuous, and have fewer degrees of freedom. The space of natural images is far smaller than the space of all possible images, for example.
 
 There are variations of the manifold hypothesis, with less restrictive assumptions. These include:
 
@@ -183,16 +183,16 @@ When a manifold $M$ is embedded into $\mathbb{R}^D$, to control the regularity o
 \tau:=\sup \left\{\varepsilon: \forall x \in \M^{\varepsilon}, \quad \exists!y \in M \text { s.t. } \operatorname{dist}(x, M)=\|x-y\|\right\},
 \]
 
-where $\M^{\varepsilon}=\left\{x \in \mathbb{R}^D: \operatorname{dist}(x, \M)<\varepsilon\right\}$ is the $\varepsilon$-neighborhood of $\M$. Equivalently, $\tau$ is the supremum over the radii of neighborhoods of $\M$ for which the projection is unique.
+where $\M^{\varepsilon}=\left\{x \in \mathbb{R}^D: \operatorname{dist}(x, \M)<\varepsilon\right\}$ is the $\varepsilon$-neighbourhood of $\M$. Equivalently, $\tau$ is the suprenum over the radii of neighbourhoods of $\M$ for which the projection is unique.
 
 \subsection{Flow Matching as a Score-Based Generative Model}
 
-Score-Based Generative Models (SGMs) \citep{ho2020denoising, song2019generative, song2020score} formulate generative modeling by estimating gradients of the log probability density (the score function). As noted by \citep{song2019generative}: ``Because gradients can be ill-defined and hard to estimate when the data resides on \textbf{low-dimensional manifolds}, we perturb the data with different levels of Gaussian noise, and jointly estimate the corresponding scores, i.e., the vector fields of gradients of the perturbed data distribution for all noise levels.''
+Score-Based Generative Models (SGMs) \citep{ho2020denoising, song2019generative, song2020score} formulate generative modelling by estimating gradients of the log probability density (the score function). As noted by \citep{song2019generative}: ``Because gradients can be ill-defined and hard to estimate when the data resides on \textbf{low-dimensional manifolds}, we perturb the data with different levels of Gaussian noise, and jointly estimate the corresponding scores, i.e., the vector fields of gradients of the perturbed data distribution for all noise levels.''
 
 Flow Matching \citep{lipman2022flow, albergo2025stochastic} provides a continuous-time vector field framework that unifies and generalises SGMs. Below, we outline the connection between Gaussian continuous flows and score matching.
 
 \paragraph{Gaussian Flows and Interpolation Schedule.}
-In generative modeling via flow matching, we aim to construct a path transforming a base noise distribution $p_1 = \mathcal{N}(0, I_d)$ into a target data distribution $p_0$. Let $X_0 \sim p_0$ and $X_1 = \varepsilon \sim \mathcal{N}(0, I_d)$. The linear conditional flow $X_t = \varphi_t(X_0, \varepsilon)$ interpolates between data and noise according to:
+In generative modelling via flow matching, we aim to construct a path transforming a base noise distribution $p_1 = \mathcal{N}(0, I_d)$ into a target data distribution $p_0$. Let $X_0 \sim p_0$ and $X_1 = \varepsilon \sim \mathcal{N}(0, I_d)$. The linear conditional flow $X_t = \varphi_t(X_0, \varepsilon)$ interpolates between data and noise according to:
 \begin{equation}
 X_t = c_t X_0 + \sigma_t \varepsilon
 \end{equation}
@@ -357,13 +357,13 @@ Identity~\eqref{eq:telescope} highlights that the error made at each time enters
 \subsection{From the telescoping identity to the matrix bound}
 \label{subsec:matrix}
 
-We turn the pathwise identity into a bound on the terminal laws by coupling.
+We turn the path-wise identity into a bound on the terminal laws by coupling.
 Let $X_0\sim\rho_0$ and transport it by both flows,
 $X_t:=\Phi_{0,t}(X_0)$ and $\hat X_t:=\hat\Phi_{0,t}(X_0)$, with terminal laws
 $\rho_T:=\mathrm{Law}(X_T)$ and $\hat\rho_T:=\mathrm{Law}(\hat X_T)$. Running both
 flows from the same $X_0$ is a coupling of $\rho_T$ and $\hat\rho_T$, so
 $W_1(\rho_T,\hat\rho_T)\le\E\|X_T-\hat X_T\|$. Applying
-Lemma~\ref{lem:telescope} pathwise at $x_0=X_0$ and the triangle inequality,
+Lemma~\ref{lem:telescope} path-wise at $x_0=X_0$ and the triangle inequality,
 \begin{equation}
   W_1(\rho_T,\hat\rho_T)
   \le\int_0^T\E\big\|\hat J_{t,T}(X_t)\,\delta v_t(X_t)\big\|\dd t
@@ -401,9 +401,7 @@ The matrix $G_{t,T}(x)$ is the Euclidean metric at the terminal time pulled back
 to the tangent space at $(t,x)$ by the learnt flow; it lives at time $t$ but
 measures squared lengths after transport to $T$. Its eigenvectors are the input
 directions at $(t,x)$ and its eigenvalues are the squared stretching factors of
-those directions. In the deterministic case \eqref{eq:pullback} is an exact
-identity, so no Cauchy--Schwarz slack is incurred in passing from the derivative
-flow to the quadratic form. The bound \eqref{eq:matrix-bound} is anisotropic
+those directions. The bound \eqref{eq:matrix-bound} is anisotropic
 precisely because it evaluates $G_{t,T}$ on the actual error direction
 $\delta v_t(x)$ rather than on the worst possible direction.
 
@@ -477,7 +475,7 @@ expansive on $E_\parallel$ and contractive on $E_\perp$:
 \end{equation}
 Its Jacobian $\nabla\hat v_t=\mathrm{diag}(\ell_t I_\parallel,-\gamma_t I_\perp)$
 is constant in space, so the derivative flow \eqref{eq:jacobian-ode} integrates
-blockwise and the pullback metric \eqref{eq:pullback} is diagonal:
+block-wise and the pullback metric \eqref{eq:pullback} is diagonal:
 \begin{equation}
   \hat J_{t,T}=
   \begin{pmatrix}
@@ -674,7 +672,7 @@ i.e., when
     \qquad
     \nabla p_\sigma(x)=0.
 \end{equation}
-For example, two components of a superlevel set may merge through a
+For example, two components of a super-level set may merge through a
 neck as $\sigma$ increases. Thus, while smoothing removes fine-scale
 spatial variation from the density and its derivatives, it should not be
 interpreted as a monotone decrease of the curvature of every individual
@@ -876,7 +874,7 @@ lies in $T_r R_\sigma$ and is annihilated by $P_N(r)$, leaving
 The normal score is a pure linear restoring field toward the ridge, with slope
 $-\sigma^{-2}$ and no curvature-induced remainder. 
 
-This also reinforces our definiton of the ridge as the locus where the normal
+This also reinforces our definition of the ridge as the locus where the normal
 component of the smoothed gradient vanishes. We see that this locus is the genuine attractor of the score's dominant term.
 
 
@@ -903,7 +901,7 @@ $d_{\mathrm{eff}}(t) = \mathbb{E}\,\mathrm{tr}\,A_t$, is neither an integer nor
 constant in $t$: it interpolates between the intrinsic dimension at small noise
 and zero at large noise, and it overshoots in between (Chapter~\ref{sec:pcf}).
 
-\paragraph{Example of Discontinuity of the Ridge.} Consider a distribution on $\mathbb{S}^1\subset\mathbb{R}^2$ which is a 1:3 mixture of 2 uniform densities on 2 semicircles. We see that a small change in noise can drastically change the location and topology of the ridge. Additionally, knowing the ridge does not tell us how the data is distributed along it, and density might be negligable at points on the ridge.
+\paragraph{Example of Discontinuity of the Ridge.} Consider a distribution on $\mathbb{S}^1\subset\mathbb{R}^2$ which is a 1:3 mixture of 2 uniform densities on 2 semicircles. We see that a small change in noise can drastically change the location and topology of the ridge. Additionally, knowing the ridge does not tell us how the data is distributed along it, and density might be negligible at points on the ridge.
 
 \begin{figure}[htbp]
     \centering
@@ -920,11 +918,11 @@ and zero at large noise, and it overshoots in between (Chapter~\ref{sec:pcf}).
         \caption{Ridge of a circle with $\sigma = 0.58$}
         \label{fig:circle_ridge_2}
     \end{subfigure}
-    \caption{Comparison of circle ridges at different noise levels $\sigma$, with inital density 1:3 mixture of 2 uniform densities on left and right semicircles, respectively.}
+    \caption{Comparison of circle ridges at different noise levels $\sigma$, with initial density 1:3 mixture of 2 uniform densities on left and right semicircles, respectively.}
     \label{fig:circle_ridges}
 \end{figure}
 
-While the ridge $R_\sigma$ has desireable qualities for small $\sigma$, and is the natural attractor of the score, for larger $\sigma$ it may be ill defined and can be discontinuous. Recalling that the ridge is a functional of the spectrum of the Jacobain of the score leads us to \autoref{sec:pcf}.
+While the ridge $R_\sigma$ has desirable qualities for small $\sigma$, and is the natural attractor of the score, for larger $\sigma$ it may be ill defined and can be discontinuous. Recalling that the ridge is a functional of the spectrum of the Jacobian of the score leads us to \autoref{sec:pcf}.
 
 \newpage
 
@@ -1065,7 +1063,7 @@ a_i = \frac{\text{posterior variance along } v_i}{\text{noise variance } t}
 The three design choices are then: threshold at $1$ (only expansion is
 penalised), measure the \emph{excess} $a_i-1$ (the neutral point is $1$,
 not $0$), and square it (making the functional comparable to a squared
-Frobenius norm and penalising strong expansion superlinearly).
+Frobenius norm and penalising strong expansion super-linearly).
 
 \paragraph{Link to ambiguity.}
 Suppose the posterior at $y$ is approximately
@@ -1272,16 +1270,16 @@ so the resulting MMSE-adaptive discretisation is
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.98\textwidth]{figures/PCB_panel.png}
-    \caption{Functionals and assigned time step evolution for Bernouli($\{+1,-1\}$)}, $\operatorname{Uniform}(\mathcal{S}^1)$, and $\operatorname{Uniform}(\{\mathcal{S}^1\} \times \{\tfrac{1}{4},-\tfrac{1}{4}\})$
+    \caption{Functionals and assigned time step evolution for Bernoulli($\{+1,-1\}$)}, $\operatorname{Uniform}(\mathcal{S}^1)$, and $\operatorname{Uniform}(\{\mathcal{S}^1\} \times \{\tfrac{1}{4},-\tfrac{1}{4}\})$
     \label{fig:PCB_panel}
 \end{figure}
 
 
-\paragraph{Geometric Interpretation.} We see the effect of the $\operatorname{MMSE}'(t)$ term on time-step density assignment. Notably, since $t d_{\text{eff}}(t) = \operatorname{MMSE}(t)$, we have $\operatorname{MMSE}'(t) = d_{\text{eff}}(t) + t d_{\text{eff}}'(t)$. Hence for higher $d_{\text{eff}}$ and cruicially changing $d_{\text{eff}}$ for larger time we require smaller time steps. Furthermore, $\mathbb{E}\left\|A_t\left(Y_t\right)\right\|_F^2 = \sum_i \E\left[a_i(t)^2 \right]$, so this discretisation assigns a high density of small timesteps whenever we have expansive eigenvalues $a_i>1$, in expectation. 
+\paragraph{Geometric Interpretation.} We see the effect of the $\operatorname{MMSE}'(t)$ term on time-step density assignment. Notably, since $t d_{\text{eff}}(t) = \operatorname{MMSE}(t)$, we have $\operatorname{MMSE}'(t) = d_{\text{eff}}(t) + t d_{\text{eff}}'(t)$. Hence for higher $d_{\text{eff}}$ and crucially changing $d_{\text{eff}}$ for larger time we require smaller time steps. Furthermore, $\mathbb{E}\left\|A_t\left(Y_t\right)\right\|_F^2 = \sum_i \E\left[a_i(t)^2 \right]$, so this discretisation assigns a high density of small time-steps whenever we have expansive eigenvalues $a_i>1$, in expectation. 
 
-\paragraph{Information Theortic Interpretation.} By \citep{guo2005mutual} we have \[\frac{d}{d t} I\left(X_0 ; X_t\right)=\frac{d I}{d \gamma} \cdot \frac{d \gamma}{d t}=\left(\frac{1}{2} \operatorname{MMSE}(t)\right)\left(-\frac{2}{t^3}\right)=-\frac{\operatorname{MMSE}(t)}{t^3}\] where $\gamma$ is the signal to noise ratio (here $1/t^2$). More to be said!
+\paragraph{Information Theoretic Interpretation.} By \citep{guo2005mutual} we have \[\frac{d}{d t} I\left(X_0 ; X_t\right)=\frac{d I}{d \gamma} \cdot \frac{d \gamma}{d t}=\left(\frac{1}{2} \operatorname{MMSE}(t)\right)\left(-\frac{2}{t^3}\right)=-\frac{\operatorname{MMSE}(t)}{t^3}\] where $\gamma$ is the signal to noise ratio (here $1/t^2$). More to be said!
 
-\paragraph{Probabilistic Interpretation.} To be discuessed.
+\paragraph{Probabilistic Interpretation.} To be discussed.
 
 
 
