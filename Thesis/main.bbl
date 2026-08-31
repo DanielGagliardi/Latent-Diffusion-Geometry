@@ -1,4 +1,4 @@
-\begin{thebibliography}{11}
+\begin{thebibliography}{12}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -29,6 +29,11 @@ Bradley~CA Brown, Anthony~L Caterini, Brendan~Leigh Ross, Jesse~C Cresswell, and
 Christopher~R Genovese, Marco Perone-Pacifico, Isabella Verdinelli, and Larry Wasserman.
 \newblock Nonparametric ridge estimation.
 \newblock 2014.
+
+\bibitem[Guo et~al.(2005)Guo, Shamai, and Verd{\'u}]{guo2005mutual}
+Dongning Guo, Shlomo Shamai, and Sergio Verd{\'u}.
+\newblock Mutual information and minimum mean-square error in gaussian channels.
+\newblock \emph{IEEE transactions on information theory}, 51\penalty0 (4):\penalty0 1261--1282, 2005.
 
 \bibitem[Ho et~al.(2020)Ho, Jain, and Abbeel]{ho2020denoising}
 Jonathan Ho, Ajay Jain, and Pieter Abbeel.

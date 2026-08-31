@@ -1080,8 +1080,6 @@ failure is driven by trajectories that enter the expansive region, not by
 its measure.
 \end{remark}
 
-\subsection{Examples}
-
 \subsection{Evolution law of MMSE}
 
 
@@ -1253,15 +1251,30 @@ so the resulting MMSE-adaptive discretisation is
     \label{eq:natural-discretisation}
 \end{equation}
 
-\begin{remark}
-    $\mathbb{E}\left\|A_t\left(Y_t\right)\right\|_F^2 = \sum_i \E\left[a_i(t)^2 \right]$, so this discretisation assigns a high density of small timesteps whenever we have expansive eigenvalues $a_i>1$, in expectation.
-\end{remark}
 
 \subsection{Interpretation}
 
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.98\textwidth]{figures/PCB_panel.png}
+    \caption{Functionals and assigned time step evolution for Bernouli($\{+1,-1\}$)}, $\operatorname{Uniform}(\mathcal{S}^1)$, and $\operatorname{Uniform}(\{\mathcal{S}^1\} \times \{\tfrac{1}{4},-\tfrac{1}{4}\})$
+    \label{fig:PCB_panel}
+\end{figure}
+
+
+\paragraph{Geometric Interpretation.} We see the effect of the $\operatorname{MMSE}'(t)$ term on time-step density assignment. Notably, since $t d_{\text{eff}}(t) = \operatorname{MMSE}(t)$, we have $\operatorname{MMSE}'(t) = d_{\text{eff}}(t) + t d_{\text{eff}}'(t)$. Hence for higher $d_{\text{eff}}$ and cruicially changing $d_{\text{eff}}$ for larger time we require smaller time steps. Furthermore, $\mathbb{E}\left\|A_t\left(Y_t\right)\right\|_F^2 = \sum_i \E\left[a_i(t)^2 \right]$, so this discretisation assigns a high density of small timesteps whenever we have expansive eigenvalues $a_i>1$, in expectation. 
+
+\paragraph{Information Theortic Interpretation.} By \citep{guo2005mutual} we have \[\frac{d}{d t} I\left(X_0 ; X_t\right)=\frac{d I}{d \gamma} \cdot \frac{d \gamma}{d t}=\left(\frac{1}{2} \operatorname{MMSE}(t)\right)\left(-\frac{2}{t^3}\right)=-\frac{\operatorname{MMSE}(t)}{t^3}\] where $\gamma$ is the signal to noise ratio (here $1/t^2$). More to be said!
+
+\paragraph{Probabilistic Interpretation.} To be discuessed.
 
 
 
+\newpage
+\section*{Acknowledgements}
+I am deeply grateful to my supervisors Eddie Aamari and Simon Coste, who are the sole reason this research internship was possible and helped me explore a question I had for more than a year.
+\section*{AI Usage}
+Image to text converters were used to aid in typesetting equations, and large language models were used for some code generation and in editing parts of the report.
 
 \newpage
 
@@ -1273,7 +1286,7 @@ so the resulting MMSE-adaptive discretisation is
 
 
 \newpage 
-\section*{Appendix: Proof of $\MMSE'(t) = \frac{1}{t^2} \E\left[\tr\left(\operatorname{Cov}\left(X \mid Y_t\right)^2\right)\right]$}
+\section*{Appendix: $\MMSE$ Evolution}
 
 \begin{theorem}
     \label{thm:mmse}
