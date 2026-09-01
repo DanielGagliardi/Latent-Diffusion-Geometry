@@ -6,6 +6,8 @@
 \usepackage[authoryear,round]{natbib}
 \usepackage[colorlinks=true,linkcolor=blue,citecolor=blue]{hyperref}
 \usepackage{subcaption}
+\usepackage{svg}
+\usepackage{bbm}
 
 % --- Custom Math Operators & Commands ---
 \DeclareMathOperator{\Cov}{Cov}
@@ -57,7 +59,41 @@
 
 \begin{document}
 
-\maketitle
+\begin{titlepage}
+    \centering
+
+    
+    {\scshape\Large Master IASD (AI, Systems, Data)\par}
+    \vspace{1cm}
+    
+    {\huge\bfseries Geometry of Diffusion\par}
+    \vspace{0.5cm}
+    {\large A report submitted for the IASD M2 Program\par}
+    
+    \vspace{2.5cm}
+    
+    {\large\textbf{Author:}}\\
+    {\Large Daniel Gagliardi}\\[1.5cm]
+    
+    \begin{minipage}{0.45\textwidth}
+        \begin{flushleft} \large
+            \textbf{Primary Supervisor}\\
+            Eddie Aamari \\ ENS PSL
+        \end{flushleft}
+    \end{minipage}
+    \begin{minipage}{0.45\textwidth}
+        \begin{flushright} \large
+            \textbf{Secondary Supervisor}\\
+            Simone Coste \\ Paris Cit\'e
+        \end{flushright}
+    \end{minipage}
+    
+    \vfill
+
+    
+    {\large August 2026\par}
+\end{titlepage}
+
 
 \newpage
 \tableofcontents
@@ -75,16 +111,16 @@ The value in understanding this is twofold: firstly, to be able to make better m
 
 One big idea is the notion of data lying on some low-dimensional space, which makes both learning and sampling from distributions supported on this lower-dimensional space easier. However this belief only truly simplifies the system in the small noise regime. All sorts of complex geometry can happen in the higher noise regimes. We do not, as we will see, have a nicely behaved interpolating family of manifolds.
 
-Before doing the IASD M2 program, I had written a master's dissertation on diffusion models under the manifold hypothesis, under the supervision of George Deligiannidis. During this I became deeply interested in dimension estimation of datasets. This at best vague and at worst terribly ill-posed question seemed to me one where and answer would tell us a lot about the natural geometry of data, and how diffusion models are able to make use of this. Almost every paper I found on the interplay between manifolds and diffusion models cited work from Eddie Aamari.
+Before doing the IASD M2 program, I had written a master's dissertation on diffusion models under the manifold hypothesis, under the supervision of George Deligiannidis. During this I became deeply interested in dimension estimation of datasets. This at best vague (and at worst terribly ill-posed) question seemed to me one where and answer would tell us a lot about the natural geometry of data, and how diffusion models are able to make use of this. Almost every paper I found on the interplay between manifolds and diffusion models cited work from Eddie Aamari.
 
-In November 2025 I reached out to Eddie Aamari to further discuss what the geometry of data could look like, and this led to this internship project. The initial goal was to understand the interplay between geometry affecting sampling error and how this could encourage simpler embeddings in a latent diffusion setting. However, given the complexity of work being done limited time was spent on investigating auto-encoders so far.
+In November 2025 I reached out to Eddie Aamari to further discuss what the geometry of data could look like, and this led to this internship project. The initial goal was to understand the interplay between geometry affecting sampling error and how this could encourage simpler embeddings in a latent diffusion setting. However, given the complexity of work being done, limited time has been spent on investigating auto-encoders so far.
 
 A key challenge of this project has been striking the balance between geometry: where things are well defined, and diffusion of probability densities: where simply by adding noise we violently change the notions of geometry we would like to equip our density with. This trade-off has led to looking at several objects, which while interesting in their own right have not been helpful in bounding sampling error. I do believe that the final part on posterior covariance fields \autoref{sec:pcf} does provide a new insight on where true complexity lies in the diffusion process.
 
 \newpage
 
 \begin{abstract}
-    Diffusion based generative models have become ubiquitous over recent years. Their success is often attributed to the geometric structure of natural data. This is commonly referred to as the manifold hypothesis. In this report we summarise our main work so far on understanding the geometry of diffusion. We examine an anisotropic stability bound, level sets, ridges, and functionals of the posterior covariance. Ultimately, we settle on the spectrum of the posterior covariance being the key object to understanding the geometery throughout the diffusion process.
+    Diffusion based generative models have become ubiquitous over recent years. Their success is often attributed to the geometric structure of natural data; commonly referred to as the manifold hypothesis. In this report we summarise our main work so far on understanding the geometrical structures densities undergoing diffusion. We examine an anisotropic stability bound, level sets, ridges, and functionals of the posterior covariance. Ultimately, we settle on the spectrum of the posterior covariance being the key object to understanding the geometery throughout the diffusion process. This yields key quantities to understand diffusion's impact on the geometry of densities, and a natural de-noising discretisation schedule.
 \end{abstract}
 
 \vspace{30mm}
@@ -104,55 +140,209 @@ A key challenge of this project has been striking the balance between geometry: 
 \section{Introduction}
 \label{sec:intro}
 
+\subsection{Motivation and Research Question}
+\label{subsec:intro-motivation}
+
+Generative modelling has undergone rapid development over the last decade. Score-based generative models (SGMs), diffusion models, and more recently flow-matching formulations provide a framework for transforming a simple reference distribution, typically a Gaussian, into a complicated target distribution $p_{\mathrm{data}}$. The central object in these methods is a time-dependent vector field which transports probability mass between the two distributions. In score-based formulations this vector field is determined by the score
+
+$$
+    \nabla_x \log p_t(x),
+$$
+
+where $p_t$ denotes the distribution obtained by perturbing the data with an appropriate amount of noise. In flow matching, the same transport can be expressed directly through a learned velocity field. For the Gaussian interpolation considered throughout this report, these descriptions are related explicitly through Tweedie's formula; see \autoref{sec:background}.
+
+The empirical success of these methods raises a fundamental geometric question:
+
+\begin{quote}
+\emph{What geometric structure does a diffusion model see as the data are progressively corrupted by noise, and how does this structure influence the dynamics of the generative process?}
+\end{quote}
+
+This question is motivated in part by the manifold hypothesis. High-dimensional natural data are often assumed to be concentrated near a lower-dimensional structure
+
+$$
+    \M \subset \R^D,
+    \qquad
+    \dim(\M)=d\ll D.
+$$
+
+In the small-noise regime, this provides a useful geometric description of the data: uncertainty is concentrated predominantly in directions tangent to $\M$, while the normal directions are strongly constrained. It is therefore natural to expect the geometry of $\M$ to influence both the score field and the dynamics of a diffusion model.
+
+The difficulty is that diffusion does not preserve this geometric picture in any straightforward sense. Gaussian perturbation immediately replaces a potentially singular distribution supported on $\M$ by a smooth density on the entire ambient space. As the noise level increases, the notion of a tangent space becomes progressively less canonical, distinct parts of the data distribution can become statistically indistinguishable, and structures which were geometrically distinct at small noise may merge at larger noise. Consequently, the question is not simply how the original manifold $\M$ affects diffusion. Rather, it is how a notion of effective geometry evolves continuously with the noise level.
+
+This report investigates this question through several geometric objects. We first consider the geometry induced by the flow itself, then level sets and density ridges, before ultimately focusing on the posterior covariance of the clean data conditioned on a noisy observation. The posterior covariance provides a continuous, probabilistic description of local geometry which remains meaningful even when a manifold, ridge, or fixed-dimensional tangent space does not.
+
 \subsection{Initial Project}
-The progress in generative modelling over the last decade has been rapid. A key shift was the introduction of score based generative models (SGM), also known as diffusion models, which allow us to interpolate between a know distribution (usually a standard Gaussian), and a target distribution $p_\text{data}$, by training a network based on data $X\sim p_\text{data}$. By repeatedly adding noise to a target density, and training a denoising network, one can sample from $p_\text{data}$. Now, flow matching methods are the standard implementation of diffusion based generative models. These crucially can be viewed as a SGM.
+\label{subsec:initial-project}
 
-While vast amounts of work has been done on improving the capabilities of diffusion models, the goemetry of the entire diffusion process has been under explored.
+The original objective of this research internship was broader than the analysis presented here. We initially aimed to investigate the geometry of both the auto-encoder and the denoising dynamics in latent diffusion models. The motivating idea was that, if the geometry of a target distribution influences quantities such as score-estimation error, discretisation error, or sampling stability, then jointly training an auto-encoder and a diffusion model might favour latent representations with simpler geometric structure.
 
-Initially, this research internship aimed to investigate the geometry of both the auto-encoder and denoiser in latent diffusion models. If one can show that the geometry of a target distribution influences the estimation of scores, discretisation error, or sampling stability, then the case can be made that when the auto-encoder and diffusion model are trained jointly, that the auto-encoder learns a more geometrically regular embedding.
+This would provide a possible theoretical explanation for a phenomenon frequently exploited in latent generative modelling: representing data in a lower-dimensional latent space can substantially simplify the subsequent generative problem. In such a picture, the encoder would not merely compress the data, but could implicitly search for a representation in which the relevant probability distribution is easier to model and transport.
 
-We spent the internship so far almost entirely looking at the geometry of diffusion.
+The analysis required to make this argument precise, however, is substantial. In particular, one must first specify what is meant by the geometry of a probability distribution once the distribution has been smoothed by Gaussian noise. Much of the work therefore became focused on the diffusion process itself, independently of any particular auto-encoder architecture.
 
-\subsection{Existing work}
+The central problem became the following. Given a target distribution $p_0$ and its Gaussian-smoothed distributions $p_t$, can we construct a geometric quantity which
 
-There exists literature on how different geometric aspects affect the diffusion process, but these are mostly asymptotic results for highly regular target densities \citep{benton2024nearly}, \citep{potaptchik2024linear}, \citep{liang2025low}.
+\begin{enumerate}
+\item captures the low-dimensional structure of the data at small noise;
+\item evolves continuously as the noise level changes;
+\item remains defined when the distribution is no longer concentrated near a single manifold;
+\item interacts naturally with the score and velocity fields used by diffusion models; and
+\item is sufficiently quantitative to say something about sampling or discretisation error?
+\end{enumerate}
 
-The main challenge of the question ``how does geometry affect diffusion'' is answering what we mean by ``geometry''. There are some issues with existing methods which make use of dimension and reach/curvature of the support of $p_\text{data}$ :
+The objects investigated in this report are successive attempts to satisfy these requirements.
+
+\subsection{Existing Geometric Descriptions}
+\label{subsec:existing-work}
+
+There is an extensive literature connecting the geometry of data distributions to statistical estimation and diffusion models. In particular, several recent results exploit low intrinsic dimension, manifold structure, or related regularity assumptions to obtain improved bounds for diffusion-based sampling and estimation \citep{benton2024nearly,potaptchik2024linear,liang2025low}.
+
+A natural starting point is therefore to describe the data using the dimension and regularity of an underlying manifold. These quantities are powerful in the small-noise regime, but become problematic once the distribution is treated as an ordinary density on the ambient space.
+
+\paragraph{Dimension.}
+Assigning an intrinsic dimension $d<D$ to a distribution which is absolutely continuous with respect to $\R^D$ is not canonical. Even when a distribution is concentrated near a manifold, several difficulties arise:
+
 \begin{itemize}
-    \item Dimension:
-    \begin{itemize}
-
-        \item Ill-posed to assign a dimension $d<D$ to a density which is absolutely continuous with respect to $\R^D$
-        \item Dimension of $p_\text{data}$ may not be constant
-        \item Dimension of $p_\text{data}$ may not be well defined everywhere, for example at intersections
-        \item Only considers dimension of target, now how effective dimension might change.
-        
-    \end{itemize}
-    \item Reach, curvature:
-    \begin{itemize}
-        \item Can be $0,\infty$ at intersections or corners
-        \item Can vary wildly along the support of $p_\text{data}$
-    \end{itemize}
+\item the effective dimension may vary spatially;
+\item different regions of the support may have different intrinsic dimensions;
+\item intersections of geometric structures need not possess a unique local dimension; and
+\item after Gaussian smoothing, the distribution is full-dimensional for every $t>0$, so its intrinsic dimension is formally $D$ even when it remains strongly concentrated around a lower-dimensional structure.
 \end{itemize}
+
+Thus, the integer dimension of an underlying manifold does not describe how many directions of uncertainty remain at a particular noise scale.
+
+\paragraph{Reach and curvature.}
+Geometric regularity can also be described using quantities such as reach or curvature \citep{federer1959curvature}. These provide strong control over the local geometry of an embedded manifold, but are fundamentally worst-case quantities. They can become degenerate at intersections, corners, or other singular configurations, and they can vary substantially across the support.
+
+More importantly, reach and curvature describe the geometry of a fixed set rather than the geometry of a probability distribution evolving under diffusion. A small region of extreme curvature carrying negligible probability mass can dominate a worst-case geometric bound despite having little relevance to the dynamics experienced by typical samples.
+
+These observations suggest that the appropriate object should be neither purely topological nor purely worst-case geometric. We instead seek a quantity which is both geometric and probabilistic, and which changes continuously with the noise level.
 
 \subsection{Objects Investigated}
+\label{subsec:objects-investigated}
 
-This gap in the literature is the primary of the project. As such, a new object other than dimension or reach or curvature had to be found. Throughout we investigated several before landing on the final and most promising object: the posterior covariance.
+We investigated several candidates before arriving at the posterior covariance field. Each captures a different aspect of the geometry of the diffusion process.
 
-\begin{itemize}
-    \item Pullback metric of flow $G_{t, T}(x)$
-    \item Level sets
-    \item Ridges
-    \item Posterior Covariance
-\end{itemize}
+\paragraph{Pullback geometry of the flow.}
+The derivative of the learned flow provides a natural metric describing how perturbations at time $t$ are amplified or suppressed by the subsequent dynamics. This leads to the pullback metric
 
-[!!!make a table comparing them after meeting!!!]
+$$
+    G_{t,T}(x)
+    =
+    D_x\hat{\Phi}_{t,T}(x)^\top
+    D_x\hat{\Phi}_{t,T}(x).
+$$
 
-\subsection{Main Contribution}
-We find that the spectrum of the posterior covariance captures geometric variation, and use functionals of the spectrum to understand geometric variation throughout the diffusion process. One of the things this allows us to do is pick a discretisation schedule to reduce the discretisation error in sampling.
+This object turns out to be directly useful for understanding sampling stability. In \autoref{sec:aniso_stab_bound}, we derive an anisotropic Wasserstein stability bound in which the velocity error is weighted according to the directions in which the learned dynamics subsequently amplify or contract it. However, $G_{t,T}$ describes the geometry of the learned dynamics, rather than the intrinsic geometry of the target distribution itself. Because we do not have access to the velocity error, this bound is not practical.
 
+\paragraph{Level sets.}
+Level sets of the smoothed density provide a classical geometric construction. Their tangent spaces and curvature are determined by the gradient and Hessian of $p_t$. Gaussian smoothing suppresses high-frequency components of these derivatives, giving a precise sense in which fine-scale geometric structure is progressively removed. Nevertheless, individual level sets can undergo topological transitions as the noise level changes, and their geometry depends on an arbitrary choice of level value. Therefore we move onto the object the level sets concentrate around.
+
+\paragraph{Ridges.}
+Density ridges provide a more direct attempt to identify the lower-dimensional structure around which probability mass concentrates. A ridge is defined by requiring the gradient to vanish in directions corresponding to sufficiently negative Hessian eigenvalues (normal directions). In the small-noise regime, ridges can serve as accurate surrogates for an underlying manifold; for example, \citet{genovese2014nonparametric} establish Hausdorff approximation and topological equivalence under suitable assumptions.
+
+However, the ridge construction requires fixing an intrinsic dimension and depends discontinuously on spectral thresholding. When Hessian eigenvalues become degenerate, the associated normal eigenspaces are no longer uniquely defined. Similarly, changes in the sign of a Hessian eigenvalue can create or destroy components of the ridge. These issues become increasingly important away from the small-noise regime, precisely where we want a description of the geometry of diffusion.
+
+\paragraph{Posterior covariance.}
+The final object considered is the posterior covariance
+
+$$
+    A_t(y)
+    :=
+    \frac{1}{t}\Cov(X\mid Y_t=y),
+    \qquad
+    Y_t=X+\sqrt{t}Z.
+$$
+
+Unlike a manifold or ridge, $A_t(y)$ is defined for every $t>0$ and every observation $y$. More importantly, it is directly connected to the local differential geometry of the score:
+
+$$
+    \nabla^2 \log p_t(y)
+    =
+    \frac{1}{t}\bigl(A_t(y)-I_D\bigr).
+$$
+
+Thus the eigenvalues of $A_t$ simultaneously describe posterior uncertainty and the local curvature of the log-density. Values close to $1$ correspond to directions in which posterior uncertainty is comparable to the injected noise, while values close to $0$ correspond to directions in which the noisy observation strongly identifies the underlying clean configuration.
+
+This connection makes $A_t$ a natural bridge between probability, geometry, and diffusion dynamics. Rather than forcing the distribution into a hard tangent/normal decomposition, it provides a soft spectral description of how many effective directions remain uncertain at each point and noise scale.
+
+\subsection{Main Contributions}
+\label{subsec:main-contributions}
+
+The main contribution of this report is to propose the posterior covariance spectrum as a useful continuous description of geometric complexity throughout the diffusion process. The analysis has three principal components.
+
+\begin{enumerate}
+    \item First, we derive an anisotropic stability bound for deterministic transport. The usual one-sided Lipschitz estimate controls all velocity errors using a single worst-case expansion rate. We show instead that the terminal effect of an error $\delta v_t(x)$ is determined by the pullback metric
+
+    $$
+        G_{t,T}(x)
+        =
+        D_x\hat{\Phi}_{t,T}(x)^\top
+        D_x\hat{\Phi}_{t,T}(x).
+    $$
+    
+    This retains the directional structure of the learned dynamics and distinguishes errors which are subsequently amplified from those which are contracted.
+    \item Second, we investigate level sets and density ridges as candidate descriptions of the evolving geometry. These constructions clarify an important distinction between \emph{geometric smoothing} and \emph{continuous geometric evolution}. Gaussian convolution suppresses fine-scale spatial frequencies and decreases Sobolev energies monotonically, but it does not imply pointwise monotonicity of curvature or continuous evolution of ridge topology. This limits the usefulness of hard geometric objects at moderate and large noise scales.
+    
+    \item Third, we introduce several scalar functionals of the posterior covariance spectrum. In particular, the effective dimension
+
+    $$
+        \deff(t)
+        =
+        \E\tr A_t(Y_t)
+    $$
+    
+    provides a continuous analogue of intrinsic dimension. We supplement it with the distance to the set of orthogonal projectors,
+    
+    $$
+        \dproj(t)
+        =
+        \E\sum_i
+        \min\{a_i^2,(a_i-1)^2\},
+    $$
+    
+    which measures how closely the local posterior geometry resembles a genuine tangent-space projector, and the expansion functional
+    
+    $$
+        \amb(t)
+        =
+        \E\sum_i(a_i-1)_+^2,
+    $$
+    
+    which isolates directions in which posterior uncertainty exceeds the injected noise scale.
+
+    \item 
+
+    A further consequence is an adaptive discretisation principle. The evolution of the MMSE satisfies
+    
+    $$
+        \operatorname{MMSE}'(t)
+        =
+        \E\|A_t(Y_t)\|_F^2.
+    $$
+    
+    Combining this identity with the local discretisation error of the reverse process gives the step-size scaling
+    
+    $$
+        \Delta t(t)
+        \propto
+        \frac{t}
+        {\sqrt{\E\|A_t(Y_t)\|_F^2}}.
+    $$
+    
+    Thus the same posterior covariance field which describes the evolving geometry also determines, through its spectral second moment, where a diffusion sampler should allocate computational effort.
+\end{enumerate}
+
+
+
+
+
+
+\paragraph{Main Takeaway} Our final perspective is that diffusion does not possess a single fixed intrinsic geometry. Instead, the geometry relevant to the dynamics is scale-dependent and probabilistic. At small noise, the posterior covariance approaches a tangent-space projector and recovers the usual manifold picture, under the manifold hypothesis. At larger noise, its spectrum becomes fractional and can contain expansive directions associated with posterior ambiguity. The posterior covariance field therefore provides a continuous interpolation between classical low-dimensional geometry and the full-dimensional probabilistic geometry of the noisy distribution.
 
 \newpage
+
+
 \section{Background}
 \label{sec:background}
 
@@ -235,6 +425,7 @@ Equation~(6) demonstrates that the velocity field $v_t(x)$ is uniquely determine
 Sampling via the deterministic flow ODE $\dot{x}_t = v_t(x_t)$ parameterised by a score model recovers the probability flow ODE framework (e.g., DDIM \citep{song2020denoising}).
 
 \subsection{Tweedie's 1\textsuperscript{st} and 2\textsuperscript{nd} Order Formulae}
+\label{subsec:tweedie}
 
 Consider the standard unscaled Gaussian perturbation model $X_t = X_0 + \sigma_t \varepsilon$, where $\varepsilon \sim \mathcal{N}(0, I_D)$ and $X_0 \sim p_0$. The conditional density of $X_t$ given $X_0 = x_0$ is:
 \begin{equation}
@@ -269,7 +460,7 @@ Dividing by $p_t(x)$:
 \frac{\nabla_x^2 p_t(x)}{p_t(x)} = -\frac{1}{\sigma_t^2} I_D + \frac{1}{\sigma_t^4} \mathbb{E}\left[(x - X_0)(x - X_0)^T \mid X_t = x\right].
 \end{equation}
 
-\subsubsection{Posterior Covariance Relation}
+
 Substituting Equations~(11) and~(14) into Equation~(12):
 \begin{align}
 \nabla_x^2 \log p_t(x) &= -\frac{1}{\sigma_t^2} I_D + \frac{1}{\sigma_t^4} \Big( \mathbb{E}\left[(x - X_0)(x - X_0)^T \mid X_t = x\right] \nonumber \\
@@ -279,6 +470,18 @@ Because $x$ is deterministic given $X_t = x$, the bracketed term reduces to the 
 \begin{equation}
 \nabla_x^2 \log p_t(x) = \frac{1}{\sigma_t^4} \operatorname{Cov}(X_0 \mid X_t = x) - \frac{1}{\sigma_t^2} I_D.
 \end{equation}
+
+This result is extremely helpful, and not at all obvious. It allows us to compute posterior covariances by autodifferentiation of a score network. 
+
+\paragraph{Takeaway.} 
+\begin{itemize}
+    \item The manifold hypothesis broadly states that data lie on lower dimensional submanifold(s) of a higher dimensional euclidean space,
+    \item From the gradient of the log likelihood of the noised density we can sample from a target density by (nnumerically) solving a vector field ODE to transport a known density to a target density,
+    \item Tweedie's $1^{\text {st }}$ and $2^{\text {nd }}$ order formulae relate the posterior mean and posterior covariance to the score and the score Jacobian, respectively.
+\end{itemize}
+
+With this background we can now explore the geometry of diffusion.
+
 \newpage
 
 \section{Anisotropic Stability Bound}
@@ -464,10 +667,13 @@ Although empirical observations suggest that $\delta v_t$ often aligns with $v_t
 
 To construct a practical coordinate system, we define fixed projection operators ($P_t$ onto the tangential subspace and $Q_t = I - P_t$ onto the normal subspace) generated exclusively by the geometry of the target distribution. Re-estimating the eigenframe for each learned model individually would introduce model-dependent weights and complicate comparative evaluations. Therefore, we fix $P_t$ once using the target density geometry, measuring all model errors within this single benchmark frame. The projection $P_t$ is derived directly from the spectral decomposition of the posterior-covariance operator $A_t$ detailed in \autoref{sec:pcf}.
 
-
+\paragraph{Conclusion on Anisotropic Stability.} Drift errors $\delta v_t$ propagate through the learned flow's derivative $\hat{J}_{t, T}$; error amplification or dampening depends on the specific spatial direction of the error rather than a single global scale. Classical bounds over-estimate this error by treating strongly contracting directions the same as expanding ones. This is important in the manifold picture where contracting dynamics along normal directions to a target manifold actively suppress normal drift errors.
 \newpage
 
-\section{Level Sets}
+\section{Level Sets and Ridges}
+\label{sec:ridges}
+
+\subsection{Level Sets}
 \label{sec:level_sets}
 
 As we smooth data lying on (or concentrated around) a manifold, two main effects occur: smoothing in the normal direction and smoothing in the tangent direction. Smoothing in the tangent direction makes a density more uniform along the manifold, leading to better-behaved level sets. Here, we investigate how these level sets evolve under smoothing.
@@ -623,16 +829,15 @@ Increasing $\sigma$ progressively filters out fine-scale features, suppressing s
 
 This behavior aligns with numerical intuition in generative modeling and sampling, where finer time steps are required near the final data distribution ($t \to 0$ or $\sigma \to 0$) to resolve higher-frequency density details. This phenomenon is especially prominent in high-dimensional image and audio signals. Analogously, JPEG compression exploits Fourier-domain (or discrete cosine) representations by discarding high-frequency components that contribute negligibly to human visual perception.
 
-\newpage
+\paragraph{Conclusion on Level Sets.} Analysing the level sets of a density helps to explain how the higher frequency components decay quadratically faster than the lower frequency components. They are however not a tractible or indeed truly helpful tool for analysing the geometrical properties of a density, since they are discontinuous. Note, one would need to make a choice of level set and there is no canonical correct choice; picking a particular quantile is arbitrary. Since the level sets seem to contract around the initial support $\M$ for small amounts of added noise, we can instead analyse the object the level sets seem to be centred around. This motivates defining, and looking at ridges of a density. 
 
-\section{Ridges}
-\label{sec:ridges}
 
-\subsection{Motivation}
+\subsection{Motivation for the Ridge}
 
-An initially counterintuitive aspect of the manifold hypothesis is that the lower-dimensional space around which perturbed data concentrates is typically not the original manifold $\M$. As the noise level increases, the effective kernel bandwidth grows, encompassing a broader region of the data space. Consequently, the noise-corrupted density concentrates around an evolving low-dimensional structure. This raises the question: \emph{What is this evolving space, and how does its geometry behave over time?}
 
-This phenomenon is evident even when considering the convolution of simple discrete distributions, such as a mixture of Gaussian-smoothed point masses: the modes of the smoothed distribution do not simply coincide with the original support.
+An initially counterintuitive aspect of the manifold hypothesis is that the lower-dimensional space around which perturbed data concentrates is typically not the original manifold $\M$. As the noise level increases, the effective kernel bandwidth grows, encompassing a broader region of the data space. Consequently, the noise-corrupted density concentrates around an evolving low-dimensional structure. This raises the question: \emph{What is this evolving space, and how does its geometry behave over time?} This key question in trying to understand the geometry of diffusion is what we try to answer here.
+
+The phenomenon of concentrating around a new space is evident even when considering the convolution of simple discrete distributions, such as a mixture of Gaussian-smoothed point masses: the modes of the smoothed distribution do not coincide with the original support.
 
 \begin{figure}[htbp]
     \centering
@@ -653,9 +858,9 @@ This phenomenon is evident even when considering the convolution of simple discr
     \label{fig:ridge_comparison}
 \end{figure}
 
-With this visual intuition, we can formalize the definition of a ridge: it is the locus of points where the gradient of the density restricted to the normal directions vanishes. However, a priori, the normal directions are not fixed externally.
+With this visual intuition, we can formalise the definition of a ridge: it is the locus of points where the gradient of the density restricted to the normal directions vanishes. However, a priori, the normal directions are not fixed externally.
 
-The key resolution is to let the density determine its own normal frame. At a point on a $d$-dimensional ridge, the density exhibits ridge-like behavior: it achieves a local maximum along the $D-d$ transverse directions, while varying comparatively smoothly along the remaining $d$ intrinsic directions. Transverse to the ridge, the density curves sharply downward; along the ridge, its curvature is mild. 
+The key observation is to let the density determine its own normal frame. At a point on a $d$-dimensional ridge, the density exhibits ridge-like behavior: it achieves a local maximum along the $D-d$ transverse directions, while varying comparatively smoothly along the remaining $d$ intrinsic directions. Transverse to the ridge, the density curves sharply downward; along the ridge, its curvature is milder. 
 
 Mathematically, this condition is governed by the Hessian of the density. Let $g(x) = \nabla p(x)$ and $H(x) = \nabla^2 p(x)$, and denote the eigenvalues of $H(x)$ in descending order:
 \begin{equation}
@@ -746,17 +951,6 @@ However, despite the smoothness of $p_t$, the ridge set $R_t$ itself does not de
     \item \textbf{Topological Discontinuities:} At locations where $\lambda_{d+1}(y) = 0$, the concavity condition triggers abruptly, causing $R_t$ to instantly gain or lose entire connected components.
 \end{enumerate}
 
-\citet{genovese2014nonparametric} address these failure modes by proving stability bounds under an assumed lower bound $\beta > 0$ on the spectral gap. Nevertheless, the underlying instability is intrinsic to the map $(m_t, A_t) \mapsto R_t$: passing smooth analytic fields through rigid scalar thresholding functions inevitably induces spatial and temporal discontinuities.
-
-A second structural limitation is that the ridge formulation requires fixing the intrinsic dimension $d \in \mathbb{N}$ a priori. In practice, there is no single consistent choice of $d$ across all noise scales. While dimension is a required integer parameter for normal frame projection, the natural scale-dependent effective dimension:
-\begin{equation}
-    \deff(t) = \E\left[\tr A_t(X_t)\right]
-\end{equation}
-is neither integer-valued nor constant in $t$. Instead, $\deff(t)$ continuously interpolates between the intrinsic dimension $d$ at small noise scales and zero at large noise scales, often overshooting non-monotonically at intermediate scales (\autoref{sec:pcf}).
-
-\paragraph{Example: Discontinuity of the Ridge Set.} 
-Consider a probability distribution supported on the unit circle $\mathbb{S}^1 \subset \R^2$, formed by a $1:3$ mixture of uniform densities along the left and right semicircles, respectively. As shown in \autoref{fig:circle_ridges}, a minute increase in the smoothing parameter $\sigma$ causes a drastic shift in both the spatial position and topology of the ridge. Furthermore, knowing the geometry of $R_\sigma$ provides no information regarding how mass is distributed along it; the probability density may be negligible over large portions of the ridge set.
-
 \begin{figure}[htbp]
     \centering
     \begin{subfigure}[b]{0.48\textwidth}
@@ -776,7 +970,21 @@ Consider a probability distribution supported on the unit circle $\mathbb{S}^1 \
     \label{fig:circle_ridges}
 \end{figure}
 
-In summary, while the ridge set $R_\sigma$ provides a useful theoretical surrogate for $\M$ at small noise levels $\sigma$ and serves as the local attractor of the score field, it becomes ill-behaved and discontinuous at larger noise scales. Recognising that the ridge is fundamentally a functional of the Jacobian spectrum of the score leads naturally to the continuous formulation presented in \autoref{sec:pcf}.
+\citet{genovese2014nonparametric} address these failure modes by proving stability bounds under an assumed lower bound $\beta > 0$ on the spectral gap. Nevertheless, the underlying instability is intrinsic to the map $(m_t, A_t) \mapsto R_t$: passing smooth analytic fields through rigid scalar thresholding functions inevitably induces spatial and temporal discontinuities.
+
+A second structural limitation is that the ridge formulation requires fixing the intrinsic dimension $d \in \mathbb{N}$ a priori. In practice, there is no single consistent choice of $d$ across all noise scales. While dimension is a required integer parameter for normal frame projection, the natural scale-dependent effective dimension:
+\begin{equation}
+    \deff(t) = \E\left[\tr A_t(X_t)\right]
+\end{equation}
+is neither integer-valued nor constant in $t$. Instead, $\deff(t)$ continuously interpolates between the intrinsic dimension $d$ at small noise scales and zero at large noise scales, often overshooting non-monotonically at intermediate scales (\autoref{sec:pcf}).
+
+\paragraph{Example: Discontinuity of the Ridge Set.} 
+Consider a probability distribution supported on the unit circle $\mathbb{S}^1 \subset \R^2$, formed by a $1:3$ mixture of uniform densities along the left and right semicircles, respectively. As shown in \autoref{fig:circle_ridges}, a minute increase in the smoothing parameter $\sigma$ causes a drastic shift in both the spatial position and topology of the ridge. Furthermore, knowing the geometry of $R_\sigma$ provides no information regarding how mass is distributed along it; the probability density may be negligible over large portions of the ridge set.
+
+
+
+\paragraph{Conclusion on the Ridge.} In summary, while the ridge set $R_\sigma$ provides a useful theoretical surrogate for $\M$ at small noise levels $\sigma$ and serves as the local attractor of the score field, it is ill-behaved, less helpful, and discontinuous at larger noise scales. Recognising that the ridge is fundamentally a functional of the Jacobian spectrum of the score leads naturally to the continuous formulation presented in \autoref{sec:pcf}.
+
 
 \newpage
 
@@ -793,7 +1001,7 @@ Here we introduce the ultimate object we analyse: posterior covariance fields.
     We call the weighted object $\mathfrak{F}_t := \Law\left(Y_t, m_t\left(Y_t\right), A_t\left(Y_t\right)\right)$ the \emph{posterior covariance field}. 
 \end{definition}
 
-There are a few reasons why it makes sense to look at this object. First, it is not plagued by the issues we encountered in the analysis of ridges or level sets in \autoref{sec:ridges} and \autoref{sec:level_sets}. These objects suffered from being too geometric for our use case, where we care about noise scales much greater than 0. We need a more analytic quantity, and the posterior covariance field is defined for all noise scales $t>0$. In fact level sets and ridges can just be viewed as functionals of $\mathfrak{F}_t$. 
+There are a few reasons why it makes sense to look at this object. First, it is not plagued by the issues we encountered in the analysis of ridges or level sets in \autoref{sec:ridges}. These objects suffered from being too geometric for our use case, where we care about noise scales much greater than 0. We need a more analytic quantity, and the posterior covariance field is defined for all noise scales $t>0$. In fact level sets and ridges can just be viewed as functionals of $\mathfrak{F}_t$. 
 
 Second, the posterior covariance captures the local geometry of the score. The posterior covariance corresponds to the Jacobian of the score. This link is given in \autoref{sec:background}. This not at all obvious fact is where we reap the rewards. Here we normalise the posterior covariance by $t$ to account for the scale of noise added. 
 
@@ -1119,25 +1327,52 @@ so the resulting MMSE-adaptive discretisation is
 \end{equation}
 
 
-\subsection{Interpretation}
+\subsection{Examples and Interpretation}
+
+In \autoref{fig:PCB_panel} we plot $\deff, \dproj, \amb$, along with $\frac{t}{\sqrt{\mathbb{E}\left\|A_t\left(Y_t\right)\right\|_F^2}}$ for 3 toy densities: $\operatorname{Bernoulli}(\{+1,-1\})$, $\operatorname{Uniform}(\mathcal{S}^1)$, and $\operatorname{Uniform}(\{\mathcal{S}^1\} \times \{\tfrac{1}{4},-\tfrac{1}{4}\})$. As expected, $\deff, \dproj, \amb$ vary over time and capture different behaviours. We also see this have an impact of the natural time-step size allocation given by $\frac{t}{\sqrt{\mathbb{E}\left\|A_t\left(Y_t\right)\right\|_F^2}}$. 
+
+In the $\operatorname{Bernoulli}(\{+1,-1\})$ case we see $\deff$ climb towards 1 ass the noised density rises in $[-1,1]$, until the scale of the noise added dominates and $\deff$ returns to 0. (Note: in general for small time $\deff$ is the true dimension, and for large time $\deff=0$.) Similarly, for small time we are in a projector like regime. The first bump in projector distance is due to $\amb$, and the second is due to the scale of noise added. The behaviour is largely similar in the $\operatorname{Uniform}(\mathcal{S}^1)$ setting. 
+
+The change in $\operatorname{Uniform}(\{\mathcal{S}^1\} \times \{\tfrac{1}{4},-\tfrac{1}{4}\})$ can be explained by the two critical times in the diffusion process: first, when the two circles merge; and second, when they collapse. The merging of the two circles makes our density cylinder-like, causing $\deff$ to exceed 1 and tend to 2 until the noise scale becomes too large.
+
+The time-step density plots interestingly capture the discrete nature of the $\operatorname{Bernoulli}(\{+1,-1\})$ case. We see that many more small timesteps are required for larger $t$, as this is where a ``phase transition'' occurs and points pick a final destination: +1 or -1. However, this behaviour is not observed in the $\operatorname{Uniform}(\mathcal{S}^1)$ and $\operatorname{Uniform}(\{\mathcal{S}^1\} \times \{\tfrac{1}{4},-\tfrac{1}{4}\})$ cases as the support is no longer discrete. We do see that dimension plays a role in the slope of the curve, which is expected since for a manifold $\left\|A_t\left(Y_t\right)\right\|_F^2 = \sum_i a_i^2 = \sum_i \mathbbm{1} \{a_i=1\}=\dim{\M}$.
+
+\begin{remark}
+    While here $\deff, \dproj, \amb$ are used, note that they are expectations, and as such there distribution is more informative in some cases. For example, if the support is the disjoint union of $\mathbb{S}^1$ and $\mathbb{S}^2$, each with equal weight, then $\deff = \tfrac{1}{2}(1+\tfrac{1}{2})$. The density plot of $\sum_i a_i$ will show modes at the different dimensions of the support. Similar subtleties can be uncovered for $\dproj, \amb$.
+\end{remark}
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.98\textwidth]{figures/PCB_panel.png}
-    \caption{Functionals and assigned time step evolution for Bernoulli($\{+1,-1\}$)}, $\operatorname{Uniform}(\mathcal{S}^1)$, and $\operatorname{Uniform}(\{\mathcal{S}^1\} \times \{\tfrac{1}{4},-\tfrac{1}{4}\})$
+    \caption{Functionals and assigned time step evolution for $\operatorname{Bernoulli}(\{+1,-1\})$, $\operatorname{Uniform}(\mathcal{S}^1)$, and $\operatorname{Uniform}(\{\mathcal{S}^1\} \times \{\tfrac{1}{4},-\tfrac{1}{4}\})$.}
     \label{fig:PCB_panel}
 \end{figure}
 
 
 \paragraph{Geometric Interpretation.} We see the effect of the $\operatorname{MMSE}'(t)$ term on time-step density assignment. Notably, since $t d_{\text{eff}}(t) = \operatorname{MMSE}(t)$, we have $\operatorname{MMSE}'(t) = d_{\text{eff}}(t) + t d_{\text{eff}}'(t)$. Hence for higher $d_{\text{eff}}$ and crucially changing $d_{\text{eff}}$ for larger time we require smaller time steps. Furthermore, $\mathbb{E}\left\|A_t\left(Y_t\right)\right\|_F^2 = \sum_i \E\left[a_i(t)^2 \right]$, so this discretisation assigns a high density of small time-steps whenever we have expansive eigenvalues $a_i>1$, in expectation. 
 
-\paragraph{Information Theoretic Interpretation.} By \citep{guo2005mutual} we have \[\frac{d}{d t} I\left(X_0 ; X_t\right)=\frac{d I}{d \gamma} \cdot \frac{d \gamma}{d t}=\left(\frac{1}{2} \operatorname{MMSE}(t)\right)\left(-\frac{2}{t^3}\right)=-\frac{\operatorname{MMSE}(t)}{t^3}\] where $\gamma$ is the signal to noise ratio (here $1/t^2$). More to be said!
+\paragraph{Dynamics Interpretation.} The perhaps clearest interpretation is from the viewpoint of dynamics: when the score field does not change much in time, we can take a larger step in time without incurring a large error. When the score varies drastically in time is exactly when we need a higher density of time steps to ensure we do not incur a high discretisation error.
 
-\paragraph{Probabilistic Interpretation.} To be discussed.
+\paragraph{Probabilistic Interpretation.} Time regularity of the score $\nabla \log p_t$ translates into the time regularity of $\mmse$, via the posterior mean $m_t$. Hence it is precisely when our posterior mean and $\mmse$ are changing that the score is, therefore requiring a higher density of time steps.
 
+\begin{remark}
+    There also is an information-theoretic interpretation. By \citep{guo2005mutual} we have \[\frac{d}{d t} I\left(X_0 ; X_t\right)=\frac{d I}{d \gamma} \cdot \frac{d \gamma}{d t}=\left(\frac{1}{2} \operatorname{MMSE}(t)\right)\left(-\frac{2}{t^3}\right)=-\frac{\operatorname{MMSE}(t)}{t^3}\] where $\gamma$ is the signal to noise ratio (here $1/t^2$). We do not yet fully understand this, and are continuing to investigate this. We expect the conclusion to relate time step density to information flow.
+\end{remark}
 
+\paragraph{Conclusion on the Posterior Covariance Field.} The spectrum of the posterior covariance (and its distribtuion) is smooth and highly informative. Many possible metrics can be built from it, including a measure of dimension $\deff$. The spectrum of the posterior covariance relates closely to the Jacobian of the score, as discussed in \autoref{subsec:tweedie}, as as such determines the dynamical stability of the denoising process. The expected Frobenius norm of the rescaled posterior covariance controls step size when discretising and solving the velocity field ODE in generation, and yields an optimal choice of time schedule.   
 
 \newpage
+\section{Conclusion and Next Steps}
+
+Throughout this research internship we have attempted to build the tools necessary to understand how the geometery of a density changes as it is noised. This is key in understanding diffusion-based generative models. We explored anisotropic error propogation, level sets and ridges, and the spectrum of the posterior covariance. 
+
+After these successive attempts to find an informative and tractible object, we conclude that the spectrum of the posterior covariance, and functions thereof, are the key object. This allows us to build metrics to analyse the behaviour of densities throughout the noising process, and sheds new light on where complexity lies during the denoising process.
+
+The commonly held belief that score regularity decreases as we approach out final density $p_\text{data}$ is incomplete, and sometimes incorrect. Change in geometry as a result of noise affects score regularity, and this can happen at intermediate (non-final) times during generation.
+
+\paragraph{Next steps.}
+
+We would like to investigate the behaviour of $\deff, \dproj, \amb$ for real datasets and trained score networks. Furthermore, we would like investigate latent diffusion models to see how $\deff, \dproj, \amb$ vary between lower dimensional latent space and higher dimensional input/output space.
 
 \section*{Acknowledgements}
 I am deeply grateful to my supervisors Eddie Aamari and Simon Coste, who are the sole reason this research internship was possible and helped me explore a question I had for more than a year.
