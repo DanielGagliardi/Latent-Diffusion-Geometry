@@ -6,7 +6,6 @@
 \usepackage[authoryear,round]{natbib}
 \usepackage[colorlinks=true,linkcolor=blue,citecolor=blue]{hyperref}
 \usepackage{subcaption}
-\usepackage{svg}
 \usepackage{bbm}
 
 % --- Custom Math Operators & Commands ---
@@ -271,7 +270,7 @@ This connection makes $A_t$ a natural bridge between probability, geometry, and 
 \subsection{Main Contributions}
 \label{subsec:main-contributions}
 
-The main contribution of this report is to propose the posterior covariance spectrum as a useful continuous description of geometric complexity throughout the diffusion process. The analysis has three principal components.
+The main contribution of this report is to propose the posterior covariance spectrum as a useful continuous description of geometric complexity throughout the diffusion process. The analysis has four components.
 
 \begin{enumerate}
     \item First, we derive an anisotropic stability bound for deterministic transport. The usual one-sided Lipschitz estimate controls all velocity errors using a single worst-case expansion rate. We show instead that the terminal effect of an error $\delta v_t(x)$ is determined by the pullback metric
@@ -401,26 +400,29 @@ where $c_t, \sigma_t \in \mathbb{R}$ are continuously differentiable schedule fu
 The marginal probability density $p_t$ of $X_t$ evolves according to the continuity equation $\partial_t p_t = -\nabla \cdot (v_t p_t)$. The marginal vector field $v_t(x)$ generating this continuous density transformation is obtained via the conditional expectation:
 \begin{equation}
 v_t(x) = \mathbb{E}\left[\dot{X}_t \mid X_t = x\right] = \dot{c}_t \mathbb{E}\left[X_0 \mid X_t = x\right] + \dot{\sigma}_t \mathbb{E}\left[\varepsilon \mid X_t = x\right].
+\label{eq:vt-marginal}
 \end{equation}
 
 \paragraph{Derivation via Tweedie's Formula.}
 Since $p_t$ corresponds to the distribution of $c_t X_0$ corrupted by additive Gaussian noise $\sigma_t \varepsilon \sim \mathcal{N}(0, \sigma_t^2 I_D)$, Tweedie's identity yields closed-form relationships between the conditional expectations and the score function $\nabla_x \log p_t(x)$:
 \begin{equation}
 \mathbb{E}\left[\varepsilon \mid X_t = x\right] = -\sigma_t \nabla_x \log p_t(x),
+\label{eq:cond-eps}
 \end{equation}
 \begin{equation}
 \mathbb{E}\left[X_0 \mid X_t = x\right] = \frac{x + \sigma_t^2 \nabla_x \log p_t(x)}{c_t}.
+\label{eq:cond-x0}
 \end{equation}
 
-Substituting Equations~(4) and~(5) into the marginal velocity expression~(3) gives:
+Substituting \eqref{eq:cond-eps} and \eqref{eq:cond-x0} into the marginal velocity expression \eqref{eq:vt-marginal} gives:
 \begin{align}
 v_t(x) &= \dot{c}_t \left( \frac{x + \sigma_t^2 \nabla_x \log p_t(x)}{c_t} \right) + \dot{\sigma}_t \left( -\sigma_t \nabla_x \log p_t(x) \right) \nonumber \\
 &= \frac{\dot{c}_t}{c_t} x + \left( \frac{\dot{c}_t \sigma_t^2}{c_t} - \dot{\sigma}_t \sigma_t \right) \nabla_x \log p_t(x) \nonumber \\
-&= \frac{\dot{c}_t}{c_t} x + \sigma_t^2 \left( \frac{\dot{c}_t}{c_t} - \frac{\dot{\sigma}_t}{\sigma_t} \right) \nabla_x \log p_t(x).
+&= \frac{\dot{c}_t}{c_t} x + \sigma_t^2 \left( \frac{\dot{c}_t}{c_t} - \frac{\dot{\sigma}_t}{\sigma_t} \right) \nabla_x \log p_t(x). \label{eq:vt-final}
 \end{align}
 
 \paragraph{Equivalence of Parameterisations.}
-Equation~(6) demonstrates that the velocity field $v_t(x)$ is uniquely determined by the noise schedules $c_t, \sigma_t$ and the score function $\nabla_x \log p_t(x)$. Consequently, the following target parameterisations are equivalent up to deterministic pointwise linear transformations:
+Equation~\eqref{eq:vt-final} demonstrates that the velocity field $v_t(x)$ is uniquely determined by the noise schedules $c_t, \sigma_t$ and the score function $\nabla_x \log p_t(x)$. Consequently, the following target parameterisations are equivalent up to deterministic pointwise linear transformations:
 \begin{equation}
 \nabla_x \log p_t(x) \quad \iff \quad \mathbb{E}\left[\varepsilon \mid X_t = x\right] \quad \iff \quad \mathbb{E}\left[X_0 \mid X_t = x\right] \quad \iff \quad v_t(x).
 \end{equation}
@@ -446,12 +448,14 @@ Differentiating $p_t(x)$ under the integral sign with respect to $x$:
 Dividing by $p_t(x)$ and applying Bayes' rule $p(x_0 \mid x) = \frac{p_t(x \mid x_0) p_0(x_0)}{p_t(x)}$ yields Tweedie's first-order identity:
 \begin{equation}
 \nabla_x \log p_t(x) = \frac{\nabla_x p_t(x)}{p_t(x)} = \frac{\mathbb{E}[X_0 \mid X_t = x] - x}{\sigma_t^2}.
+\label{eq:tweedie1}
 \end{equation}
 
 \subsubsection{Second Derivative (Hessian Matrix / Score Jacobian)}
 Expanding the Hessian matrix of the log-marginal density:
 \begin{equation}
 \nabla_x^2 \log p_t(x) = \frac{\nabla_x^2 p_t(x)}{p_t(x)} - \left( \nabla_x \log p_t(x) \right) \left( \nabla_x \log p_t(x) \right)^T.
+\label{eq:hess-log}
 \end{equation}
 Differentiating $\nabla_x p_t(x)$ a second time yields:
 \begin{equation}
@@ -460,10 +464,11 @@ Differentiating $\nabla_x p_t(x)$ a second time yields:
 Dividing by $p_t(x)$:
 \begin{equation}
 \frac{\nabla_x^2 p_t(x)}{p_t(x)} = -\frac{1}{\sigma_t^2} I_D + \frac{1}{\sigma_t^4} \mathbb{E}\left[(x - X_0)(x - X_0)^T \mid X_t = x\right].
+\label{eq:hess-p}
 \end{equation}
 
 
-Substituting Equations~(11) and~(14) into Equation~(12):
+Substituting \eqref{eq:tweedie1} and \eqref{eq:hess-p} into \eqref{eq:hess-log}:
 \begin{align}
 \nabla_x^2 \log p_t(x) &= -\frac{1}{\sigma_t^2} I_D + \frac{1}{\sigma_t^4} \Big( \mathbb{E}\left[(x - X_0)(x - X_0)^T \mid X_t = x\right] \nonumber \\
 &\quad - \mathbb{E}\left[x - X_0 \mid X_t = x\right] \mathbb{E}\left[x - X_0 \mid X_t = x\right]^T \Big).
@@ -490,7 +495,6 @@ With this background we can now explore the geometry of diffusion.
 \label{sec:aniso_stab_bound}
 
 We record a stability estimate for generator matching that tracks \emph{which} directions of a drift error are amplified and which are dampened. The scalar one-sided Lipschitz estimate propagates every error with a single worst-case rate, making it sharp only in an isotropic sense. The estimate below replaces that scalar rate with the derivative flow of the learned dynamics.
-
 \subsection{The Deterministic Transport Mechanism}
 \label{subsec:mechanism}
 
@@ -575,7 +579,7 @@ Then the Wasserstein distance satisfies:
 \end{theorem}
 
 \begin{proof}
-Substituting the norm identity \eqref{eq:pullback} directly into \eqref{eq:coupling-bound} completes the proof.
+Substituting the norm identity \eqref{eq:pullback} into \eqref{eq:coupling-bound} completes the proof.
 \end{proof}
 
 The matrix $G_{t,T}(x)$ represents the standard Euclidean metric at terminal time $T$ pulled back to the tangent space at $(t,x)$ via the learned flow. It operates at time $t$ while measuring vector magnitudes following transport to time $T$. Its eigenvectors identify principal directionalities at $(t,x)$, and its eigenvalues correspond to squared directional stretching factors. Bound~\eqref{eq:matrix-bound} is anisotropic because it explicitly evaluates $G_{t,T}$ along the error vector $\delta v_t(x)$ rather than maximising over all directions.
@@ -658,7 +662,7 @@ The scalar estimate cannot separate these components. Its expansion rate corresp
   \qquad (\ell_t \ge 0),
   \label{eq:block-scalar-rate}
 \end{equation}
-forcing Corollary~\ref{cor:scalar} to propagate \emph{both} error components using the tangential expansion factor $e^{\int_t^T \ell}$. By replacing normal contraction $e^{-\int_t^T \gamma}$ with expansion, it overestimates normal error contributions by a factor of $e^{\int_t^T (\ell_s + \gamma_s) \dd s}$. In regimes near target manifolds where contraction is strong ($\gamma_t \sim (T-t)^{-1}$, making $e^{-\int_t^T \gamma}$ decay polynomially in $T-t$), this overestimate creates the illusion of persistent error accumulation where damping actually occurs.
+forcing Corollary~\ref{cor:scalar} to propagate \emph{both} error components using the tangential expansion factor $e^{\int_t^T \ell}$. By replacing normal contraction $e^{-\int_t^T \gamma}$ with expansion, it overestimates normal error contributions by a factor of $e^{\int_t^T (\ell_s + \gamma_s) \dd s}$. In regimes near target manifolds where contraction is strong (so that $\int_t^T \gamma_s \dd s$ is large and the normal factor $e^{-\int_t^T \gamma}$ is heavily suppressed), this overestimate creates the illusion of persistent error accumulation where damping actually occurs.
 
 \subsection{Structural Requirements on the Drift Error}
 \label{subsec:direction}
@@ -667,7 +671,7 @@ The matrix and scalar bounds require different levels of information about the v
 
 Although empirical observations suggest that $\delta v_t$ often aligns with $v_t$ or exhibits Gaussian fluctuations across random training runs, the statistical behaviour of $\delta v_t$ is generally unknown prior to training.
 
-To construct a practical coordinate system, we define fixed projection operators ($P_t$ onto the tangential subspace and $Q_t = I - P_t$ onto the normal subspace) generated exclusively by the geometry of the target distribution. Re-estimating the eigenframe for each learned model individually would introduce model-dependent weights and complicate comparative evaluations. Therefore, we fix $P_t$ once using the target density geometry, measuring all model errors within this single benchmark frame. The projection $P_t$ is derived directly from the spectral decomposition of the posterior-covariance operator $A_t$ detailed in \autoref{sec:pcf}.
+To construct a practical coordinate system, we define fixed projection operators ($P_t$ onto the tangential subspace and $Q_t = I - P_t$ onto the normal subspace) generated exclusively by the geometry of the target distribution. Re-estimating the eigenframe for each learned model individually would introduce model-dependent weights and complicate comparative evaluations. Therefore, we fix $P_t$ once using the target density geometry, derived from the spectral decomposition of the posterior-covariance operator $A_t$ detailed in \autoref{sec:pcf}.
 
 \paragraph{Conclusion on Anisotropic Stability.} Drift errors $\delta v_t$ propagate through the learned flow's derivative $\hat{J}_{t, T}$; error amplification or dampening depends on the specific spatial direction of the error rather than a single global scale. Classical bounds over-estimate this error by treating strongly contracting directions the same as expanding ones. This is important in the manifold picture where contracting dynamics along normal directions to a target manifold actively suppress normal drift errors.
 \newpage
@@ -870,29 +874,29 @@ Mathematically, this condition is governed by the Hessian of the density. Let $g
 \end{equation}
 with corresponding orthonormal eigenvectors $u_1(x), \dots, u_D(x)$. The directions of sharpest downward concavity correspond to the most negative eigenvalues. Thus, we define the normal space at $x$ as the span of the bottom $D-d$ eigenvectors, and the tangent space as the span of the top $d$ eigenvectors. Writing $V(x) = [u_{d+1}(x) \mid \dots \mid u_D(x)]$ for the normal frame, the orthogonal projector onto the normal subspace is given by:
 \begin{equation}
-    L(x) = V(x)V(x)^\top.
+    P_N(x) = V(x)V(x)^\top.
 \end{equation}
 Importantly, the normal space is not specified exogenously; it is determined intrinsically by the second-order geometric structure of the density field itself.
 
 A point $x$ belongs to the $d$-dimensional ridge if the density cannot be increased by moving along any normal direction. Equivalently, the projection of the gradient onto the normal space vanishes. Defining the projected gradient:
 \begin{equation}
-    G(x) := L(x) g(x),
+    g_\perp(x) := P_N(x) g(x),
 \end{equation}
 the $d$-dimensional ridge set $R$ is defined as:
 \begin{equation}
-    R := \bigl\{ x \in \R^D : \|G(x)\| = 0, \; \lambda_{d+1}(x) < 0 \bigr\}.
+    R := \bigl\{ x \in \R^D : \|g_\perp(x)\| = 0, \; \lambda_{d+1}(x) < 0 \bigr\}.
 \end{equation}
 The strict inequality $\lambda_{d+1}(x) < 0$ guarantees that even the largest eigenvalue in the normal direction is strictly negative, ensuring local maximality transverse to the ridge rather than a saddle point. 
 
-When $d = 0$, this definition recovers classical local modes: $L(x) = \Id$, the condition $\|G(x)\| = 0$ simplifies to $\nabla p(x) = 0$, and $\lambda_1(x) < 0$ isolates local maxima. A general $d$-ridge relaxes this requirement by demanding critical point behaviour solely within the $(D-d)$-dimensional normal subspace, coupled with negative concavity across the normal block.
+When $d = 0$, this definition recovers classical local modes: $P_N(x) = \Id$, the condition $\|g_\perp(x)\| = 0$ simplifies to $\nabla p(x) = 0$, and $\lambda_1(x) < 0$ isolates local maxima. A general $d$-ridge relaxes this requirement by demanding critical point behaviour solely within the $(D-d)$-dimensional normal subspace, coupled with negative concavity across the normal block.
 
 \subsection{Concentration of the Score along the Ridge}
 
 We first highlight a useful structural property: the ridge of $\log p_\sigma$ and the ridge of $p_\sigma$ define the identical spatial set. Because the logarithmic function is strictly monotonic, $\nabla \log p_\sigma = p_\sigma^{-1} \nabla p_\sigma$ vanishes if and only if $\nabla p_\sigma = 0$. Furthermore, their Hessians satisfy:
 \begin{equation}
-    \nabla^2 \log p_\sigma = \frac{1}{p_\sigma} \nabla^2 p_\sigma - \frac{1}{p_\sigma^2} \nabla p_\sigma \nabla p_\sigma^\top,
+    \nabla^2 \log p_\sigma = \frac{1}{p_\sigma} \nabla^2 p_\sigma - \frac{1}{p_\sigma^2} \nabla p_\sigma \nabla p_\sigma^\top.
 \end{equation}
-which coincides with $p_\sigma^{-1} \nabla^2 p_\sigma$ whenever the projected gradient vanishes on the ridge. 
+On the ridge the \emph{normal} projection of $\nabla p_\sigma$ vanishes, so the rank-one correction $p_\sigma^{-2}\,\nabla p_\sigma \nabla p_\sigma^\top$ reduces to a purely tangential term. It therefore leaves the normal block of the Hessian unchanged, and under a spectral gap separating the tangential and normal eigenvalues the two densities induce the same normal eigenframe, hence the same ridge set. 
 
 We work primarily with the log-density $\log p_\sigma$ for two key reasons:
 \begin{enumerate}
@@ -976,7 +980,7 @@ However, despite the smoothness of $p_t$, the ridge set $R_t$ itself does not de
 
 A second structural limitation is that the ridge formulation requires fixing the intrinsic dimension $d \in \mathbb{N}$ a priori. In practice, there is no single consistent choice of $d$ across all noise scales. While dimension is a required integer parameter for normal frame projection, the natural scale-dependent effective dimension:
 \begin{equation}
-    \deff(t) = \E\left[\tr A_t(X_t)\right]
+    \deff(t) = \E\left[\tr A_t(Y_t)\right]
 \end{equation}
 is neither integer-valued nor constant in $t$. Instead, $\deff(t)$ continuously interpolates between the intrinsic dimension $d$ at small noise scales and zero at large noise scales, often overshooting non-monotonically at intermediate scales (\autoref{sec:pcf}).
 
@@ -1095,11 +1099,13 @@ Then
 \end{proposition}
 
 \begin{proof}
-$\Pset$ is invariant under conjugation by orthogonal matrices, and for
-symmetric $A$ the Frobenius distance to a conjugation-invariant set is
-minimised by a $P$ sharing the eigenvectors of $A$ (a consequence of the
-Hoffman--Wielandt inequality). It then remains to round each $a_i$ to the
-nearer of $0$ or $1$.
+For $P\in\Pset$ we have $P^2=P$, so
+$\Frob{A-P}^2 = \Frob{A}^2 - 2\tr(AP) + \tr(P) = \Frob{A}^2 - \tr\bigl((2A-I)P\bigr)$,
+and minimising the distance is equivalent to maximising $\tr\bigl((2A-I)P\bigr)$
+over projectors. By von Neumann's trace inequality this is maximised by a $P$
+sharing the eigenvectors of $A$ and projecting onto the eigenvectors with
+$2a_i-1>0$; equivalently, each $a_i$ is rounded to the nearer of $0$ or $1$,
+which gives $\sum_i \min\{a_i^2,(a_i-1)^2\}$.
 \end{proof}
 
 Thus $\dproj$ measures, on average, how far the soft posterior geometry is from being a genuine tangent-space projector. It vanishes
@@ -1183,7 +1189,7 @@ Substituting this directly into the expression for $\operatorname{MMSE}'(t)$:
 
 We consider the additive Gaussian perturbation
 \begin{equation}
-    X_t = X_0 + \sqrt{t}\,Z,
+    Y_t = X + \sqrt{t}\,Z,
     \qquad
     Z \sim \mathcal{N}(0,I_D),
 \end{equation}
@@ -1195,13 +1201,13 @@ so that, in the notation of the diffusion model,
 \end{equation}
 Let
 \begin{equation}
-    m_t(x) := \mathbb{E}[X_0 \mid X_t=x]
+    m_t(x) := \mathbb{E}[X \mid Y_t=x]
 \end{equation}
 denote the posterior mean and define the minimum mean-squared error
 \begin{equation}
     \operatorname{MMSE}(t)
     :=
-    \mathbb{E}\left[\|X_0-m_t(X_t)\|^2\right].
+    \mathbb{E}\left[\|X-m_t(Y_t)\|^2\right].
 \end{equation}
 Following the effective-dimension viewpoint, we write
 \begin{equation}
@@ -1227,32 +1233,29 @@ For additive Gaussian noise, Tweedie's formula gives
 The same martingale argument used in \citep{potaptchik2024linear} to control the score variation in the discretised reverse process then yields, for two noise levels
 $t<t'$,
 \begin{equation}
-\begin{aligned}
-    &
     \mathbb{E}
     \left\|
-        s_t(X_t\mid t',X_{t'})
-        -
-        s_t(X_t)
+        s_t(Y_t) - \bar{s}_{t\mid t'}(Y_{t'})
     \right\|^2
-    \\
-    &\qquad =
+    =
     \frac{1}{t^2}
     \left(
         \operatorname{MMSE}(t')
         -
         \operatorname{MMSE}(t)
     \right),
-\end{aligned}
 \label{eq:score-mmse}
 \end{equation}
-with the sign understood according to the direction in which the diffusion trajectory is traversed. Thus, for a sufficiently fine discretisation with step size
+where $\bar{s}_{t\mid t'}(Y_{t'}) := \mathbb{E}\bigl[s_t(Y_t)\mid Y_{t'}\bigr]$ is the level-$t$ score conditioned on the coarse-grid state $Y_{t'}$ (the value used by a reverse step that holds the score fixed across $[t,t']$), and the sign is understood according to the direction in which the diffusion trajectory is traversed. For two adjacent grid points with step size
 \begin{equation}
     \Delta t_k := t_{k+1}-t_k,
 \end{equation}
-the contribution of the $k$-th interval is, up to higher-order terms,
+the interval contribution is the time-integral of \eqref{eq:score-mmse}; since its integrand grows linearly from $0$ at $t_k$, we obtain, up to higher-order terms,
 \begin{equation}
     \mathcal{E}_k
+    \;\asymp\;
+    \int_{t_k}^{t_{k+1}}
+    \frac{\left|\operatorname{MMSE}'(t_k)\right|}{t_k^2}\,(t-t_k)\dd t
     \;\asymp\;
     \frac{\left|\operatorname{MMSE}'(t_k)\right|}
          {t_k^2}
@@ -1358,7 +1361,7 @@ The time-step density plots interestingly capture the discrete nature of the $\o
 \paragraph{Probabilistic Interpretation.} Time regularity of the score $\nabla \log p_t$ translates into the time regularity of $\mmse$, via the posterior mean $m_t$. Hence it is precisely when our posterior mean and $\mmse$ are changing that the score changes substantially, therefore requiring a higher density of time steps.
 
 \begin{remark}
-    There also is an information-theoretic interpretation. By \citep{guo2005mutual} we have \[\frac{d}{d t} I\left(X_0 ; X_t\right)=\frac{d I}{d \gamma} \cdot \frac{d \gamma}{d t}=\left(\frac{1}{2}\operatorname{MMSE}(t)\right)\left(-\frac{1}{t^2}\right)=-\frac{\operatorname{MMSE}(t)}{2t^2}\] where $\gamma$ is the signal-to-noise ratio (here $1/t$). We do not yet fully understand this, and are continuing to investigate this. We expect the conclusion to relate time step density to information flow.
+    There also is an information-theoretic interpretation. By \citep{guo2005mutual} we have \[\frac{d}{d t} I\left(X ; Y_t\right)=\frac{d I}{d \gamma} \cdot \frac{d \gamma}{d t}=\left(\frac{1}{2}\operatorname{MMSE}(t)\right)\left(-\frac{1}{t^2}\right)=-\frac{\operatorname{MMSE}(t)}{2t^2}\] where $\gamma$ is the signal-to-noise ratio (here $1/t$). We do not yet fully understand this, and are continuing to investigate this. We expect the conclusion to relate time step density to information flow.
 \end{remark}
 
 \paragraph{Conclusion on the Posterior Covariance Field.} The spectrum of the posterior covariance (and its distribution) is smooth and highly informative. Many possible metrics can be built from it, including a measure of dimension $\deff$. The spectrum of the posterior covariance relates closely to the Jacobian of the score, as discussed in \autoref{subsec:tweedie}, and as such determines the dynamical stability of the denoising process. The expected Frobenius norm of the rescaled posterior covariance controls step size when discretising and solving the velocity field ODE in generation, and yields an optimal choice of time schedule.   
@@ -1374,7 +1377,7 @@ The commonly held belief that score regularity decreases as we approach our fina
 
 \paragraph{Next steps.}
 
-We would like to investigate the behaviour of $\deff, \dproj, \amb$ for real datasets and trained score networks. Furthermore, we would like to investigate latent diffusion models to see how $\deff, \dproj, \amb$ vary between lower-dimensional latent space and higher dimensional input/output space. We also would like to explore what else can be gained from the spectrum of the poserior covariance.
+We would like to investigate the behaviour of $\deff, \dproj, \amb$ for real datasets and trained score networks. Furthermore, we would like to investigate latent diffusion models to see how $\deff, \dproj, \amb$ vary between lower-dimensional latent space and higher dimensional input/output space. We also would like to explore what else can be gained from the spectrum of the posterior covariance.
 
 \section*{Acknowledgements}
 I am deeply grateful to my supervisors Eddie Aamari and Simon Coste, who are the sole reason this research internship was possible and helped me explore a question I had for more than a year.
@@ -1392,7 +1395,8 @@ Image to text converters were used to aid in typesetting equations, and large la
 
 
 \newpage 
-\section*{Appendix: $\MMSE$ Evolution}
+\appendix
+\section{\texorpdfstring{$\MMSE$}{MMSE} Evolution}
 
 \begin{theorem}
     \label{thm:mmse}
@@ -1405,23 +1409,23 @@ Image to text converters were used to aid in typesetting equations, and large la
     \begin{proof}
     The marginal density of $Y_t$, $p_t(y) = \int p(x) (2\pi t)^{-D/2} \exp\left(-\frac{\|y-x\|^2}{2t}\right) dx$, satisfies the heat equation $\frac{\partial p_t(y)}{\partial t} = \frac{1}{2} \Delta_y p_t(y)$. Define the score function $s_t(y) = \nabla_y \log p_t(y)$ and the Fisher information trace $J(t) = \mathbb{E}\left[\|s_t(Y_t)\|^2\right]$.
     
-    \paragraph{1. Score representation of conditional statistics.}
-    Spatial differentiation of $p_t(y)$ yields Tweedie's formula:
-    $$ s_t(y) = \frac{\nabla_y p_t(y)}{p_t(y)} = -\frac{y - \mathbb{E}[X \mid Y_t = y]}{t} \implies X - \mathbb{E}[X \mid Y_t] = -t s_t(Y_t) $$
+    \paragraph{Score representation of conditional statistics.}
+    Spatial differentiation of $p_t(y)$ yields Tweedie's formula, relating the posterior mean to the score:
+    $$ s_t(y) = \frac{\nabla_y p_t(y)}{p_t(y)} = -\frac{y - \mathbb{E}[X \mid Y_t = y]}{t}, \qquad \text{i.e.} \qquad \mathbb{E}[X \mid Y_t = y] = y + t\, s_t(y). $$
     Taking the spatial Jacobian of $\mathbb{E}[X \mid Y_t = y] = y + t s_t(y)$:
     $$ \nabla_y \mathbb{E}[X \mid Y_t = y] = \frac{1}{t} \operatorname{Cov}(X \mid Y_t = y) = I_D + t \nabla_y s_t(y) $$
     Rearranging yields the score Hessian:
     $$ \nabla_y s_t(y) = \frac{\operatorname{Cov}(X \mid Y_t = y) - t I_D}{t^2} $$
     
-    \paragraph{2. Relation between MMSE and Fisher information.}
-    Since $\mathbb E[\|s_t(Y_t)\|^2] = -\mathbb E[\operatorname{tr}\nabla_y s_t(Y_t)]$ and
-    $\mathbb E[\operatorname{tr}\operatorname{Cov}(X\mid Y_t)] = \mathrm{MMSE}(t)$,
-    substituting the score Hessian gives
-    $$ J(t) = -\mathbb E\!\left[\operatorname{tr}\frac{\operatorname{Cov}(X\mid Y_t)-tI_D}{t^2}\right]
-          = \frac{D}{t} - \frac{\mathrm{MMSE}(t)}{t^2}
-       \;\Longrightarrow\; \mathrm{MMSE}(t) = tD - t^2 J(t). $$
+    \paragraph{Relation between MMSE and Fisher information.}
+
+    From $X = Y_t - \sqrt{t}\,Z$ and $\mathbb{E}[X\mid Y_t] = Y_t + t\,s_t(Y_t)$, the estimation error is
+    $$ X - \mathbb{E}[X\mid Y_t] = -\sqrt{t}\,Z - t\,s_t(Y_t). $$
+    Squaring, taking expectations, and using Stein's identity
+    $\mathbb{E}\langle Z, s_t(Y_t)\rangle = \sqrt{t}\,\mathbb{E}[\operatorname{tr}\nabla_y s_t(Y_t)] = -\sqrt{t}\,J(t)$:
+    $$ \operatorname{MMSE}(t) = tD + 2t^{3/2}\big(-\sqrt{t}\,J(t)\big) + t^2 J(t) = tD - t^2 J(t). $$
     
-    \paragraph{3. Time evolution of Fisher information.}
+    \paragraph{Time evolution of Fisher information.}
     Differentiating $J(t) = \int p_t(y) \|\nabla \log p_t(y)\|^2 dy$ with respect to $t$ under heat flow $\frac{\partial p_t}{\partial t} = \frac{1}{2} \Delta p_t$ yields de Bruijn's score identity:
     $$ J'(t) = -\mathbb{E}\left[ \|\nabla_y s_t(Y_t)\|_F^2 \right] = -\mathbb{E}\left[ \operatorname{tr}\left( (\nabla_y s_t(Y_t))^2 \right) \right] $$
     Substituting the expression for $\nabla_y s_t(Y_t)$:
@@ -1431,7 +1435,7 @@ Image to text converters were used to aid in typesetting equations, and large la
     &= -\frac{1}{t^4} \mathbb{E}\left[ \operatorname{tr}\left( \operatorname{Cov}(X \mid Y_t)^2 \right) \right] + \frac{2}{t^3} \operatorname{MMSE}(t) - \frac{D}{t^2}
     \end{align*}
     
-    \paragraph{4. Total differentiation of MMSE(t).}
+    \paragraph{Total differentiation of MMSE(t).}
     Differentiating $\operatorname{MMSE}(t) = t D - t^2 J(t)$ via the product rule:
     $$ \operatorname{MMSE}'(t) = D - 2t J(t) - t^2 J'(t) $$
     Substituting $2t J(t) = 2D - \frac{2\operatorname{MMSE}(t)}{t}$ and $-t^2 J'(t)$:
